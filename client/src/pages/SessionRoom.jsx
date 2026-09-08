@@ -6,14 +6,12 @@ import { useWebRTC } from "../hooks/useWebRTC";
 import VideoTile from "../components/VideoTile";
 import Chat from "../components/Chat";
 import Whiteboard from "../components/Whiteboard";
+import { formatIST } from "../utils/sessionTime";
 
 function joinErrorMessage(error) {
   if (!error) return null;
   if (error.reason === "too-early") {
-    const when = new Date(error.scheduledAt).toLocaleString(undefined, {
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
+    const when = formatIST(new Date(error.scheduledAt));
     return `This session hasn't started yet — it's scheduled for ${when}. You can join up to 5 minutes early.`;
   }
   const messages = {
@@ -56,6 +54,7 @@ function SessionRoom() {
     toggleCamera,
     toggleScreenShare,
     notifySessionEnded,
+    leaveRoom,
   } = useWebRTC(sessionId);
 
   useEffect(() => {
@@ -83,6 +82,9 @@ function SessionRoom() {
   function handleLeave() {
     // Just leaves this participant's side — the other participant stays in
     // the room and can keep going, or wait. Doesn't mark the session done.
+    // Stop the camera/mic synchronously, right now, rather than waiting on
+    // the unmount cleanup to eventually run.
+    leaveRoom();
     navigate("/swaps");
   }
 
@@ -95,6 +97,7 @@ function SessionRoom() {
       // even if the REST call fails (e.g. already handled by the other
       // side), still let this participant leave the room
     } finally {
+      leaveRoom();
       navigate("/swaps");
     }
   }
@@ -108,9 +111,9 @@ function SessionRoom() {
           </h1>
           <p className="text-sm text-slate-500">{CONNECTION_LABELS[connectionState]}</p>
         </div>
-        <Link to="/swaps" className="text-sm text-slate-500 hover:text-slate-900">
+        <button onClick={handleLeave} className="text-sm text-slate-500 hover:text-slate-900">
           ← Back to swaps
-        </Link>
+        </button>
       </div>
 
       {joinError && (

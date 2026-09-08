@@ -20,6 +20,9 @@ export function useWebRTC(sessionId) {
   const socketRef = useRef(null);
   const cameraTrackRef = useRef(null);
   const screenTrackRef = useRef(null);
+  // Points at the current effect run's performLeave, so the imperative
+  // leaveRoom() below always tears down whichever call is actually live.
+  const performLeaveRef = useRef(() => {});
 
   function createPeerConnection(socket) {
     const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
@@ -44,17 +47,40 @@ export function useWebRTC(sessionId) {
 
   useEffect(() => {
     if (!sessionId) return;
-    let cancelled = false;
+    // Single source of truth for "have we already torn this call down" —
+    // every exit path (unmount, explicit Leave/End, the other side ending
+    // it) funnels through the same performLeave below, guarded by this so
+    // it only actually runs once no matter which path triggers it first.
+    let left = false;
 
     const socket = connectSocket();
     socketRef.current = socket;
     const pc = createPeerConnection(socket);
     pcRef.current = pc;
 
+    function performLeave() {
+      if (left) return;
+      left = true;
+      socket.emit("leave-room");
+      pc.close();
+      setLocalStream((stream) => {
+        stream?.getTracks().forEach((t) => t.stop());
+        return null;
+      });
+      setRemoteStream(null);
+      screenTrackRef.current?.stop();
+      screenTrackRef.current = null;
+      pcRef.current = null;
+      disconnectSocket();
+    }
+    performLeaveRef.current = performLeave;
+
     async function setup() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        if (cancelled) {
+        if (left) {
+          // Already torn down (e.g. the user left before the permission
+          // prompt resolved) — don't resurrect a stream nobody wants.
           stream.getTracks().forEach((t) => t.stop());
           return;
         }
@@ -67,7 +93,7 @@ export function useWebRTC(sessionId) {
         setJoinError({ reason: "media-denied" });
       }
 
-      socket.emit("join-room", { sessionId });
+      if (!left) socket.emit("join-room", { sessionId });
     }
 
     function onJoined({ participants: list }) {
@@ -78,25 +104,8 @@ export function useWebRTC(sessionId) {
       setJoinError(error);
     }
 
-    // Shared teardown for "the call is over" — used both when this
-    // participant explicitly ends/leaves (effect cleanup) and when the
-    // *other* participant ends it while this component stays mounted to
-    // show the "session ended" banner. Safe to call more than once: closing
-    // an already-closed RTCPeerConnection and stopping an already-stopped
-    // track are both no-ops per spec.
-    function teardownMedia() {
-      pc.close();
-      setLocalStream((stream) => {
-        stream?.getTracks().forEach((t) => t.stop());
-        return null;
-      });
-      setRemoteStream(null);
-      screenTrackRef.current?.stop();
-      screenTrackRef.current = null;
-    }
-
     function onSessionEnded() {
-      teardownMedia();
+      performLeave();
       setSessionEnded(true);
     }
 
@@ -146,8 +155,6 @@ export function useWebRTC(sessionId) {
     }
 
     return () => {
-      cancelled = true;
-      socket.emit("leave-room");
       socket.off("joined-room", onJoined);
       socket.off("join-error", onJoinError);
       socket.off("participant-joined", onParticipantJoined);
@@ -156,10 +163,7 @@ export function useWebRTC(sessionId) {
       socket.off("ice-candidate", onIceCandidate);
       socket.off("participant-left", onParticipantLeft);
       socket.off("session-ended", onSessionEnded);
-
-      teardownMedia();
-      pcRef.current = null;
-      disconnectSocket();
+      performLeave();
     };
   }, [sessionId]);
 
@@ -220,6 +224,13 @@ export function useWebRTC(sessionId) {
     socketRef.current?.emit("session-ended");
   }, []);
 
+  // Imperative, synchronous teardown — call this directly from a Leave/End
+  // button BEFORE navigating away, so the camera/mic are released the
+  // instant the user clicks, rather than depending on unmount timing.
+  const leaveRoom = useCallback(() => {
+    performLeaveRef.current();
+  }, []);
+
   return {
     localStream,
     remoteStream,
@@ -234,5 +245,6 @@ export function useWebRTC(sessionId) {
     toggleCamera,
     toggleScreenShare,
     notifySessionEnded,
+    leaveRoom,
   };
 }

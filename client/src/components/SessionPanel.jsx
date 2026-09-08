@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { createSession, getSessions, updateSessionStatus } from "../services/sessions";
-import { getScheduledDateTime, isJoinable } from "../utils/sessionTime";
+import {
+  getScheduledDateTime,
+  isJoinable,
+  formatIST,
+  formatSessionDate,
+  todayIST,
+} from "../utils/sessionTime";
 
 const STATUS_STYLES = {
   upcoming: "bg-blue-100 text-blue-800",
@@ -17,12 +23,8 @@ const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
   return `${h}:${m}`;
 });
 
-function todayStr() {
-  return new Date().toISOString().slice(0, 10);
-}
-
 function emptyForm(skillOptions) {
-  return { skill: skillOptions[0] || "", date: todayStr(), time: "18:00", duration: 60, notes: "" };
+  return { skill: skillOptions[0] || "", date: todayIST(), time: "18:00", duration: 60, notes: "" };
 }
 
 function SessionPanel({ swap }) {
@@ -89,7 +91,7 @@ function SessionPanel({ swap }) {
             <div key={s._id} className="flex items-center justify-between text-sm border-b border-slate-100 pb-2">
               <div>
                 <span className="font-medium">{s.skill}</span> —{" "}
-                {new Date(s.date).toLocaleDateString()} at {s.time} ({s.duration}min)
+                {formatSessionDate(s)} at {s.time} IST ({s.duration}min)
                 {s.notes && <p className="text-slate-500 text-xs mt-0.5">{s.notes}</p>}
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -107,10 +109,10 @@ function SessionPanel({ swap }) {
                       </Link>
                     ) : (
                       <span
-                        title={`This session unlocks 5 minutes before ${getScheduledDateTime(s).toLocaleString()}`}
+                        title={`This session unlocks 5 minutes before ${formatIST(getScheduledDateTime(s))}`}
                         className="text-xs text-slate-400 border border-slate-200 rounded-md px-2 py-1 cursor-default"
                       >
-                        Starts at {s.time}
+                        Starts at {s.time} IST
                       </span>
                     )}
                     <button
@@ -143,7 +145,7 @@ function SessionPanel({ swap }) {
           <input
             type="date"
             value={form.date}
-            min={todayStr()}
+            min={todayIST()}
             onChange={(e) => setForm({ ...form, date: e.target.value })}
             required
             className="border border-slate-300 rounded-md px-2 py-1.5 text-sm"
@@ -151,11 +153,12 @@ function SessionPanel({ swap }) {
           <select
             value={form.time}
             onChange={(e) => setForm({ ...form, time: e.target.value })}
+            title="Time is in India Standard Time (IST)"
             className="border border-slate-300 rounded-md px-2 py-1.5 text-sm"
           >
             {TIME_OPTIONS.map((t) => (
               <option key={t} value={t}>
-                {t}
+                {t} IST
               </option>
             ))}
           </select>
