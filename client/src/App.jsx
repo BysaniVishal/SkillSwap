@@ -10,6 +10,7 @@ import PublicProfile from "./pages/PublicProfile";
 import Discover from "./pages/Discover";
 import Requests from "./pages/Requests";
 import Swaps from "./pages/Swaps";
+import SessionRoom from "./pages/SessionRoom";
 
 function App() {
   return (
@@ -64,6 +65,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Swaps />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/sessions/:sessionId/room"
+          element={
+            <ProtectedRoute>
+              <SessionRoom />
             </ProtectedRoute>
           }
         />

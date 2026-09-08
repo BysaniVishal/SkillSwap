@@ -85,4 +85,4 @@ async function updateSessionStatus(req, res) {
   res.status(200).json({ session });
 }
 
-module.exports = { createSession, getSessions, updateSessionStatus };
+module.exports = { createSession, getSessions, updateSessionStatus, assertParticipant };

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { createSession, getSessions, updateSessionStatus } from "../services/sessions";
 
 const STATUS_STYLES = {
@@ -74,6 +75,12 @@ function SessionPanel({ swap }) {
               </span>
               {s.status === "upcoming" && (
                 <>
+                  <Link
+                    to={`/sessions/${s._id}/room`}
+                    className="text-xs font-medium text-white bg-slate-900 rounded-md px-2 py-1 hover:bg-slate-700"
+                  >
+                    Join Meeting
+                  </Link>
                   <button
                     onClick={() => handleStatus(s._id, "completed")}
                     className="text-xs text-emerald-700 hover:underline"
