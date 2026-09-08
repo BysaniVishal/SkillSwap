@@ -15,11 +15,24 @@ app.get("/api/health", (req, res) => {
 });
 
 app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/users", require("./routes/userRoutes"));
+app.use("/api/skills", require("./routes/skillRoutes"));
 
 // route mounts will be added here in later phases
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
+
+  if (err.name === "ValidationError") {
+    return res.status(400).json({ message: err.message });
+  }
+  if (err.name === "CastError") {
+    return res.status(400).json({ message: `Invalid ${err.path}: ${err.value}` });
+  }
+  if (err.code === 11000) {
+    return res.status(409).json({ message: "Duplicate value for a unique field" });
+  }
+
   res.status(err.status || 500).json({ message: err.message || "Server error" });
 });
 
