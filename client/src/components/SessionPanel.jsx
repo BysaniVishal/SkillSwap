@@ -82,12 +82,6 @@ function SessionPanel({ swap }) {
                     Join Meeting
                   </Link>
                   <button
-                    onClick={() => handleStatus(s._id, "completed")}
-                    className="text-xs text-emerald-700 hover:underline"
-                  >
-                    Complete
-                  </button>
-                  <button
                     onClick={() => handleStatus(s._id, "cancelled")}
                     className="text-xs text-red-600 hover:underline"
                   >

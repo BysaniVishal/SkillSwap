@@ -1,19 +1,30 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { getSessions } from "../services/sessions";
+import { getSessions, updateSessionStatus } from "../services/sessions";
 import { useWebRTC } from "../hooks/useWebRTC";
 import VideoTile from "../components/VideoTile";
 import Chat from "../components/Chat";
 import Whiteboard from "../components/Whiteboard";
 
-const JOIN_ERROR_MESSAGES = {
-  forbidden: "You're not a participant in this session.",
-  "room-full": "This session's room already has two participants.",
-  "session-not-active": "This session is no longer upcoming.",
-  "not-found": "Session not found.",
-  "media-denied": "Camera/mic access was denied. You can still use chat and the whiteboard.",
-};
+function joinErrorMessage(error) {
+  if (!error) return null;
+  if (error.reason === "too-early") {
+    const when = new Date(error.scheduledAt).toLocaleString(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+    return `This session hasn't started yet — it's scheduled for ${when}. You can join up to 5 minutes early.`;
+  }
+  const messages = {
+    forbidden: "You're not a participant in this session.",
+    "room-full": "This session's room already has two participants.",
+    "session-not-active": "This session is no longer upcoming.",
+    "not-found": "Session not found.",
+    "media-denied": "Camera/mic access was denied. You can still use chat and the whiteboard.",
+  };
+  return messages[error.reason] || "Something went wrong joining this room.";
+}
 
 const CONNECTION_LABELS = {
   new: "Waiting for the other participant to join...",
@@ -27,8 +38,10 @@ const CONNECTION_LABELS = {
 function SessionRoom() {
   const { sessionId } = useParams();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [session, setSession] = useState(null);
   const [tab, setTab] = useState("chat");
+  const [ending, setEnding] = useState(false);
 
   const {
     localStream,
@@ -38,9 +51,11 @@ function SessionRoom() {
     micOn,
     cameraOn,
     joinError,
+    sessionEnded,
     toggleMic,
     toggleCamera,
     toggleScreenShare,
+    notifySessionEnded,
   } = useWebRTC(sessionId);
 
   useEffect(() => {
@@ -56,6 +71,19 @@ function SessionRoom() {
         ? session.swap.userB
         : session.swap.userA
       : null;
+
+  async function handleEndSession() {
+    setEnding(true);
+    try {
+      await updateSessionStatus(sessionId, "completed");
+      notifySessionEnded();
+    } catch {
+      // even if the REST call fails (e.g. already handled by the other
+      // side), still let this participant leave the room
+    } finally {
+      navigate("/swaps");
+    }
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
@@ -73,7 +101,16 @@ function SessionRoom() {
 
       {joinError && (
         <div className="mb-4 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
-          {JOIN_ERROR_MESSAGES[joinError] || "Something went wrong joining this room."}
+          {joinErrorMessage(joinError)}
+        </div>
+      )}
+
+      {sessionEnded && (
+        <div className="mb-4 text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-md px-3 py-2 flex items-center justify-between">
+          <span>The other participant ended this session — it's been marked completed.</span>
+          <Link to="/swaps" className="font-medium underline">
+            Back to swaps
+          </Link>
         </div>
       )}
 
@@ -102,6 +139,13 @@ function SessionRoom() {
               className={`text-sm rounded-md px-3 py-1.5 border ${isScreenSharing ? "bg-slate-900 text-white border-slate-900" : "border-slate-300 hover:bg-slate-50"}`}
             >
               {isScreenSharing ? "Stop sharing" : "Share screen"}
+            </button>
+            <button
+              onClick={handleEndSession}
+              disabled={ending || sessionEnded}
+              className="text-sm rounded-md px-3 py-1.5 bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 ml-auto"
+            >
+              {ending ? "Ending..." : "End Session"}
             </button>
           </div>
         </div>

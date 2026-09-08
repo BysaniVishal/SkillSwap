@@ -14,6 +14,7 @@ export function useWebRTC(sessionId) {
   const [cameraOn, setCameraOn] = useState(true);
   const [participants, setParticipants] = useState([]);
   const [joinError, setJoinError] = useState(null);
+  const [sessionEnded, setSessionEnded] = useState(false);
 
   const pcRef = useRef(null);
   const socketRef = useRef(null);
@@ -63,7 +64,7 @@ export function useWebRTC(sessionId) {
       } catch (err) {
         // Camera/mic denied — chat and whiteboard still work since they
         // don't depend on getUserMedia at all.
-        setJoinError("media-denied");
+        setJoinError({ reason: "media-denied" });
       }
 
       socket.emit("join-room", { sessionId });
@@ -73,8 +74,12 @@ export function useWebRTC(sessionId) {
       setParticipants(list);
     }
 
-    function onJoinError({ reason }) {
-      setJoinError(reason);
+    function onJoinError(error) {
+      setJoinError(error);
+    }
+
+    function onSessionEnded() {
+      setSessionEnded(true);
     }
 
     function onParticipantJoined() {
@@ -114,6 +119,7 @@ export function useWebRTC(sessionId) {
     socket.on("answer", onAnswer);
     socket.on("ice-candidate", onIceCandidate);
     socket.on("participant-left", onParticipantLeft);
+    socket.on("session-ended", onSessionEnded);
 
     if (socket.connected) {
       setup();
@@ -131,6 +137,7 @@ export function useWebRTC(sessionId) {
       socket.off("answer", onAnswer);
       socket.off("ice-candidate", onIceCandidate);
       socket.off("participant-left", onParticipantLeft);
+      socket.off("session-ended", onSessionEnded);
 
       pc.close();
       pcRef.current = null;
@@ -196,6 +203,10 @@ export function useWebRTC(sessionId) {
     }
   }, [isScreenSharing, stopScreenShare]);
 
+  const notifySessionEnded = useCallback(() => {
+    socketRef.current?.emit("session-ended");
+  }, []);
+
   return {
     localStream,
     remoteStream,
@@ -205,8 +216,10 @@ export function useWebRTC(sessionId) {
     cameraOn,
     participants,
     joinError,
+    sessionEnded,
     toggleMic,
     toggleCamera,
     toggleScreenShare,
+    notifySessionEnded,
   };
 }

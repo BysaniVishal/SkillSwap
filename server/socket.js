@@ -3,6 +3,11 @@ const jwt = require("jsonwebtoken");
 const User = require("./models/User");
 const Session = require("./models/Session");
 const { assertParticipant } = require("./controllers/sessionController");
+const { getScheduledDateTime } = require("./utils/sessionTime");
+
+// Joining is allowed from this many minutes before the scheduled start —
+// a small grace window, not an open-ended "anytime while upcoming" policy.
+const EARLY_JOIN_BUFFER_MS = 5 * 60 * 1000;
 
 // sessionId -> Map<socketId, { userId, name, screenSharing }>
 const rooms = new Map();
@@ -61,6 +66,14 @@ function initSocket(httpServer) {
 
         if (session.status !== "upcoming") {
           return socket.emit("join-error", { reason: "session-not-active" });
+        }
+
+        const scheduledAt = getScheduledDateTime(session);
+        if (Date.now() < scheduledAt.getTime() - EARLY_JOIN_BUFFER_MS) {
+          return socket.emit("join-error", {
+            reason: "too-early",
+            scheduledAt: scheduledAt.toISOString(),
+          });
         }
 
         const room = getRoom(sessionId);
@@ -135,6 +148,13 @@ function initSocket(httpServer) {
 
     socket.on("clear-board", () => {
       if (currentSessionId) socket.to(currentSessionId).emit("clear-board");
+    });
+
+    // The REST call that actually marks the Session completed happens
+    // separately (see updateSessionStatus) — this just lets the other
+    // participant's UI react live instead of silently losing the peer.
+    socket.on("session-ended", () => {
+      if (currentSessionId) socket.to(currentSessionId).emit("session-ended");
     });
 
     socket.on("disconnect", () => leaveCurrentRoom());
