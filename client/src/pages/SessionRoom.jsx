@@ -72,6 +72,20 @@ function SessionRoom() {
         : session.swap.userA
       : null;
 
+  // If the other participant ends the session while we're still here, give
+  // them a moment to read the banner, then take them back automatically.
+  useEffect(() => {
+    if (!sessionEnded) return;
+    const timer = setTimeout(() => navigate("/swaps"), 2500);
+    return () => clearTimeout(timer);
+  }, [sessionEnded, navigate]);
+
+  function handleLeave() {
+    // Just leaves this participant's side — the other participant stays in
+    // the room and can keep going, or wait. Doesn't mark the session done.
+    navigate("/swaps");
+  }
+
   async function handleEndSession() {
     setEnding(true);
     try {
@@ -107,9 +121,9 @@ function SessionRoom() {
 
       {sessionEnded && (
         <div className="mb-4 text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-md px-3 py-2 flex items-center justify-between">
-          <span>The other participant ended this session — it's been marked completed.</span>
+          <span>This session has ended and was marked completed. Taking you back...</span>
           <Link to="/swaps" className="font-medium underline">
-            Back to swaps
+            Back to swaps now
           </Link>
         </div>
       )}
@@ -121,32 +135,47 @@ function SessionRoom() {
             <VideoTile stream={remoteStream} label={other?.name || "Other participant"} />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={toggleMic}
-              className={`text-sm rounded-md px-3 py-1.5 border ${micOn ? "border-slate-300 hover:bg-slate-50" : "bg-red-50 border-red-200 text-red-700"}`}
+              disabled={sessionEnded}
+              className={`text-sm rounded-md px-3 py-1.5 border disabled:opacity-40 ${micOn ? "border-slate-300 hover:bg-slate-50" : "bg-red-50 border-red-200 text-red-700"}`}
             >
               {micOn ? "Mute mic" : "Unmute mic"}
             </button>
             <button
               onClick={toggleCamera}
-              className={`text-sm rounded-md px-3 py-1.5 border ${cameraOn ? "border-slate-300 hover:bg-slate-50" : "bg-red-50 border-red-200 text-red-700"}`}
+              disabled={sessionEnded}
+              className={`text-sm rounded-md px-3 py-1.5 border disabled:opacity-40 ${cameraOn ? "border-slate-300 hover:bg-slate-50" : "bg-red-50 border-red-200 text-red-700"}`}
             >
               {cameraOn ? "Turn off camera" : "Turn on camera"}
             </button>
             <button
               onClick={toggleScreenShare}
-              className={`text-sm rounded-md px-3 py-1.5 border ${isScreenSharing ? "bg-slate-900 text-white border-slate-900" : "border-slate-300 hover:bg-slate-50"}`}
+              disabled={sessionEnded}
+              className={`text-sm rounded-md px-3 py-1.5 border disabled:opacity-40 ${isScreenSharing ? "bg-slate-900 text-white border-slate-900" : "border-slate-300 hover:bg-slate-50"}`}
             >
               {isScreenSharing ? "Stop sharing" : "Share screen"}
             </button>
-            <button
-              onClick={handleEndSession}
-              disabled={ending || sessionEnded}
-              className="text-sm rounded-md px-3 py-1.5 bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 ml-auto"
-            >
-              {ending ? "Ending..." : "End Session"}
-            </button>
+
+            <div className="flex items-center gap-2 ml-auto">
+              <button
+                onClick={handleLeave}
+                disabled={ending || sessionEnded}
+                title="Leave the call — the other participant can stay or continue"
+                className="text-sm rounded-md px-3 py-1.5 border border-slate-300 hover:bg-slate-50 disabled:opacity-50"
+              >
+                Leave Session
+              </button>
+              <button
+                onClick={handleEndSession}
+                disabled={ending || sessionEnded}
+                title="Ends the session for both of you and marks it completed"
+                className="text-sm rounded-md px-3 py-1.5 bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {ending ? "Ending..." : "End Session"}
+              </button>
+            </div>
           </div>
         </div>
 

@@ -9,18 +9,21 @@ const { getScheduledDateTime } = require("./utils/sessionTime");
 // a small grace window, not an open-ended "anytime while upcoming" policy.
 const EARLY_JOIN_BUFFER_MS = 5 * 60 * 1000;
 
-// sessionId -> Map<socketId, { userId, name, screenSharing }>
+// sessionId -> { participants: Map<socketId, {userId, name}>, bothJoined: boolean }
+// bothJoined tracks whether the room ever actually reached 2 people, so a
+// single participant joining and leaving alone (partner never showed up)
+// doesn't get auto-recorded as a session that took place.
 const rooms = new Map();
 
 function getRoom(sessionId) {
   if (!rooms.has(sessionId)) {
-    rooms.set(sessionId, new Map());
+    rooms.set(sessionId, { participants: new Map(), bothJoined: false });
   }
   return rooms.get(sessionId);
 }
 
-function participantList(room) {
-  return [...room.entries()].map(([socketId, p]) => ({
+function participantList(participants) {
+  return [...participants.entries()].map(([socketId, p]) => ({
     socketId,
     userId: p.userId,
     name: p.name,
@@ -77,30 +80,33 @@ function initSocket(httpServer) {
         }
 
         const room = getRoom(sessionId);
+        const participants = room.participants;
 
         // A user rejoining (e.g. a second tab, or a refresh the server hasn't
         // cleaned up yet) replaces their own stale slot rather than occupying
         // a second seat and locking out their actual swap partner.
-        for (const [socketId, p] of room.entries()) {
+        for (const [socketId, p] of participants.entries()) {
           if (p.userId === socket.user._id.toString()) {
-            room.delete(socketId);
+            participants.delete(socketId);
             io.sockets.sockets.get(socketId)?.disconnect(true);
           }
         }
 
-        if (room.size >= 2) {
+        if (participants.size >= 2) {
           return socket.emit("join-error", { reason: "room-full" });
         }
 
-        room.set(socket.id, {
+        participants.set(socket.id, {
           userId: socket.user._id.toString(),
           name: socket.user.name,
           screenSharing: false,
         });
+        if (participants.size === 2) room.bothJoined = true;
+
         currentSessionId = sessionId;
         socket.join(sessionId);
 
-        socket.emit("joined-room", { sessionId, participants: participantList(room) });
+        socket.emit("joined-room", { sessionId, participants: participantList(participants) });
         socket.to(sessionId).emit("participant-joined", {
           socketId: socket.id,
           userId: socket.user._id.toString(),
@@ -161,13 +167,30 @@ function initSocket(httpServer) {
 
     function leaveCurrentRoom() {
       if (!currentSessionId) return;
-      const room = rooms.get(currentSessionId);
+      const sessionId = currentSessionId;
+      const room = rooms.get(sessionId);
+
       if (room) {
-        room.delete(socket.id);
-        if (room.size === 0) rooms.delete(currentSessionId);
+        room.participants.delete(socket.id);
+
+        if (room.participants.size === 0) {
+          // Both people were here at some point and now the room is empty —
+          // record that the session actually happened, without requiring
+          // either side to explicitly click "End Session". Guarded by the
+          // status filter so this never clobbers a session already ended
+          // explicitly (or already completed by this same check).
+          if (room.bothJoined) {
+            Session.updateOne(
+              { _id: sessionId, status: "upcoming" },
+              { status: "completed" }
+            ).catch((err) => console.error("Auto-complete session failed:", err));
+          }
+          rooms.delete(sessionId);
+        }
       }
-      socket.to(currentSessionId).emit("participant-left", { socketId: socket.id });
-      socket.leave(currentSessionId);
+
+      socket.to(sessionId).emit("participant-left", { socketId: socket.id });
+      socket.leave(sessionId);
       currentSessionId = null;
     }
   });

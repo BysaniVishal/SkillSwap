@@ -78,7 +78,25 @@ export function useWebRTC(sessionId) {
       setJoinError(error);
     }
 
+    // Shared teardown for "the call is over" — used both when this
+    // participant explicitly ends/leaves (effect cleanup) and when the
+    // *other* participant ends it while this component stays mounted to
+    // show the "session ended" banner. Safe to call more than once: closing
+    // an already-closed RTCPeerConnection and stopping an already-stopped
+    // track are both no-ops per spec.
+    function teardownMedia() {
+      pc.close();
+      setLocalStream((stream) => {
+        stream?.getTracks().forEach((t) => t.stop());
+        return null;
+      });
+      setRemoteStream(null);
+      screenTrackRef.current?.stop();
+      screenTrackRef.current = null;
+    }
+
     function onSessionEnded() {
+      teardownMedia();
       setSessionEnded(true);
     }
 
@@ -139,13 +157,8 @@ export function useWebRTC(sessionId) {
       socket.off("participant-left", onParticipantLeft);
       socket.off("session-ended", onSessionEnded);
 
-      pc.close();
+      teardownMedia();
       pcRef.current = null;
-      setLocalStream((stream) => {
-        stream?.getTracks().forEach((t) => t.stop());
-        return null;
-      });
-      screenTrackRef.current?.stop();
       disconnectSocket();
     };
   }, [sessionId]);

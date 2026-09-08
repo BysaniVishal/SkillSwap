@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { createSession, getSessions, updateSessionStatus } from "../services/sessions";
+import { getScheduledDateTime, isJoinable } from "../utils/sessionTime";
 
 const STATUS_STYLES = {
   upcoming: "bg-blue-100 text-blue-800",
@@ -8,8 +9,20 @@ const STATUS_STYLES = {
   cancelled: "bg-slate-100 text-slate-600",
 };
 
+const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
+
+const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
+  const h = String(Math.floor(i / 2)).padStart(2, "0");
+  const m = i % 2 === 0 ? "00" : "30";
+  return `${h}:${m}`;
+});
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 function emptyForm(skillOptions) {
-  return { skill: skillOptions[0] || "", date: "", time: "18:00", duration: 60, notes: "" };
+  return { skill: skillOptions[0] || "", date: todayStr(), time: "18:00", duration: 60, notes: "" };
 }
 
 function SessionPanel({ swap }) {
@@ -18,6 +31,7 @@ function SessionPanel({ swap }) {
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyForm(skillOptions));
   const [error, setError] = useState("");
+  const [tick, setTick] = useState(0);
 
   function load() {
     setLoading(true);
@@ -28,6 +42,13 @@ function SessionPanel({ swap }) {
   }
 
   useEffect(load, [swap._id]);
+
+  // Re-checks joinability periodically so a session's "Starts at ..." label
+  // flips to an active Join button on its own, without a page refresh.
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 30000);
+    return () => clearInterval(id);
+  }, []);
 
   async function handleCreate(e) {
     e.preventDefault();
@@ -62,36 +83,48 @@ function SessionPanel({ swap }) {
       )}
 
       <div className="space-y-2">
-        {sessions.map((s) => (
-          <div key={s._id} className="flex items-center justify-between text-sm border-b border-slate-100 pb-2">
-            <div>
-              <span className="font-medium">{s.skill}</span> —{" "}
-              {new Date(s.date).toLocaleDateString()} at {s.time} ({s.duration}min)
-              {s.notes && <p className="text-slate-500 text-xs mt-0.5">{s.notes}</p>}
+        {sessions.map((s) => {
+          const joinable = tick >= 0 && s.status === "upcoming" && isJoinable(s);
+          return (
+            <div key={s._id} className="flex items-center justify-between text-sm border-b border-slate-100 pb-2">
+              <div>
+                <span className="font-medium">{s.skill}</span> —{" "}
+                {new Date(s.date).toLocaleDateString()} at {s.time} ({s.duration}min)
+                {s.notes && <p className="text-slate-500 text-xs mt-0.5">{s.notes}</p>}
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full capitalize ${STATUS_STYLES[s.status]}`}>
+                  {s.status}
+                </span>
+                {s.status === "upcoming" && (
+                  <>
+                    {joinable ? (
+                      <Link
+                        to={`/sessions/${s._id}/room`}
+                        className="text-xs font-medium text-white bg-slate-900 rounded-md px-2 py-1 hover:bg-slate-700"
+                      >
+                        Join Meeting
+                      </Link>
+                    ) : (
+                      <span
+                        title={`This session unlocks 5 minutes before ${getScheduledDateTime(s).toLocaleString()}`}
+                        className="text-xs text-slate-400 border border-slate-200 rounded-md px-2 py-1 cursor-default"
+                      >
+                        Starts at {s.time}
+                      </span>
+                    )}
+                    <button
+                      onClick={() => handleStatus(s._id, "cancelled")}
+                      className="text-xs text-red-600 hover:underline"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <span className={`text-xs font-medium px-2 py-0.5 rounded-full capitalize ${STATUS_STYLES[s.status]}`}>
-                {s.status}
-              </span>
-              {s.status === "upcoming" && (
-                <>
-                  <Link
-                    to={`/sessions/${s._id}/room`}
-                    className="text-xs font-medium text-white bg-slate-900 rounded-md px-2 py-1 hover:bg-slate-700"
-                  >
-                    Join Meeting
-                  </Link>
-                  <button
-                    onClick={() => handleStatus(s._id, "cancelled")}
-                    className="text-xs text-red-600 hover:underline"
-                  >
-                    Cancel
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {swap.status === "active" && (
@@ -110,26 +143,33 @@ function SessionPanel({ swap }) {
           <input
             type="date"
             value={form.date}
+            min={todayStr()}
             onChange={(e) => setForm({ ...form, date: e.target.value })}
             required
             className="border border-slate-300 rounded-md px-2 py-1.5 text-sm"
           />
-          <input
-            type="time"
+          <select
             value={form.time}
             onChange={(e) => setForm({ ...form, time: e.target.value })}
-            required
             className="border border-slate-300 rounded-md px-2 py-1.5 text-sm"
-          />
-          <input
-            type="number"
-            min="15"
-            step="15"
+          >
+            {TIME_OPTIONS.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+          <select
             value={form.duration}
             onChange={(e) => setForm({ ...form, duration: e.target.value })}
-            placeholder="Duration (min)"
             className="border border-slate-300 rounded-md px-2 py-1.5 text-sm"
-          />
+          >
+            {DURATION_OPTIONS.map((d) => (
+              <option key={d} value={d}>
+                {d} minutes
+              </option>
+            ))}
+          </select>
           <input
             value={form.notes}
             onChange={(e) => setForm({ ...form, notes: e.target.value })}
