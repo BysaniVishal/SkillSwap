@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getMySwaps, updateSwapStatus } from "../services/swaps";
+import SwapDetail from "../components/SwapDetail";
 
 const STATUS_STYLES = {
   active: "bg-emerald-100 text-emerald-800",
@@ -97,6 +98,12 @@ function Swaps() {
                   </div>
                 )}
               </div>
+
+              {swap.status !== "cancelled" && (
+                <div className="mt-3 pt-3 border-t border-slate-100">
+                  <SwapDetail swap={swap} />
+                </div>
+              )}
             </div>
           );
         })}

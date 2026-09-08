@@ -4,11 +4,14 @@ import { useAuth } from "../context/AuthContext";
 import { getUser } from "../services/users";
 import SkillBadge from "../components/SkillBadge";
 import RequestSwapForm from "../components/RequestSwapForm";
+import ReviewCard from "../components/ReviewCard";
+import { getReviews } from "../services/reviews";
 
 function PublicProfile() {
   const { id } = useParams();
   const { user: me } = useAuth();
   const [profile, setProfile] = useState(null);
+  const [reviews, setReviews] = useState([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -17,6 +20,7 @@ function PublicProfile() {
     getUser(id)
       .then(setProfile)
       .catch((err) => setError(err.response?.data?.message || "Failed to load profile"));
+    getReviews({ user: id }).then(setReviews);
   }, [id]);
 
   if (error) {
@@ -86,6 +90,17 @@ function PublicProfile() {
       </div>
 
       {!isMe && me && <RequestSwapForm me={me} profile={profile} />}
+
+      {reviews.length > 0 && (
+        <div className="bg-white border border-slate-200 rounded-xl p-6">
+          <h2 className="text-sm font-semibold text-slate-800 mb-3">Reviews</h2>
+          <div className="space-y-2">
+            {reviews.map((r) => (
+              <ReviewCard key={r._id} review={r} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {profile.availability?.length > 0 && (
         <div className="bg-white border border-slate-200 rounded-xl p-6">
