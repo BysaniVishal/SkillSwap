@@ -17,6 +17,7 @@ app.get("/api/health", (req, res) => {
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/skills", require("./routes/skillRoutes"));
+app.use("/api/matches", require("./routes/matchRoutes"));
 
 // route mounts will be added here in later phases
 

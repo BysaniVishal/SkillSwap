@@ -7,6 +7,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import EditProfile from "./pages/EditProfile";
 import PublicProfile from "./pages/PublicProfile";
+import Discover from "./pages/Discover";
 
 function App() {
   return (
@@ -37,6 +38,14 @@ function App() {
           element={
             <ProtectedRoute>
               <PublicProfile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/discover"
+          element={
+            <ProtectedRoute>
+              <Discover />
             </ProtectedRoute>
           }
         />
