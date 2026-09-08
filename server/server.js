@@ -18,6 +18,8 @@ app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/skills", require("./routes/skillRoutes"));
 app.use("/api/matches", require("./routes/matchRoutes"));
+app.use("/api/swap-requests", require("./routes/swapRequestRoutes"));
+app.use("/api/swaps", require("./routes/swapRoutes"));
 
 // route mounts will be added here in later phases
 

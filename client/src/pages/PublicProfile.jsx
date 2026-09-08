@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getUser } from "../services/users";
 import SkillBadge from "../components/SkillBadge";
+import RequestSwapForm from "../components/RequestSwapForm";
 
 function PublicProfile() {
   const { id } = useParams();
@@ -83,6 +84,8 @@ function PublicProfile() {
           <p className="text-sm text-slate-400 italic">No learning goals added yet.</p>
         )}
       </div>
+
+      {!isMe && me && <RequestSwapForm me={me} profile={profile} />}
 
       {profile.availability?.length > 0 && (
         <div className="bg-white border border-slate-200 rounded-xl p-6">

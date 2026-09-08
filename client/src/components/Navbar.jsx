@@ -25,6 +25,12 @@ function Navbar() {
               <Link to="/discover" className="text-slate-600 hover:text-slate-900">
                 Discover
               </Link>
+              <Link to="/requests" className="text-slate-600 hover:text-slate-900">
+                Requests
+              </Link>
+              <Link to="/swaps" className="text-slate-600 hover:text-slate-900">
+                Swaps
+              </Link>
               <button
                 onClick={handleLogout}
                 className="text-slate-600 hover:text-slate-900 cursor-pointer"
