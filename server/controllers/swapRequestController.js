@@ -24,43 +24,63 @@ async function pendingRequestExists(userIdA, userIdB) {
   return !!request;
 }
 
-async function createSwapRequest(req, res) {
-  const { receiver, message, senderTeaches, senderLearns } = req.body;
-
+// Pure extract of createSwapRequest's logic, decoupled from req/res so a
+// non-HTTP caller (the chatbot's tool handler) gets the exact same
+// validation guarantees — self-request/active-swap/duplicate-pending —
+// without duplicating any of it.
+async function createSwapRequestCore({ senderId, receiver, senderTeaches, senderLearns, message }) {
   if (!receiver || !senderTeaches || !senderLearns) {
-    return res
-      .status(400)
-      .json({ message: "receiver, senderTeaches and senderLearns are required" });
+    return { ok: false, status: 400, message: "receiver, senderTeaches and senderLearns are required" };
   }
 
-  if (receiver === req.user._id.toString()) {
-    return res.status(400).json({ message: "You cannot send a swap request to yourself" });
+  if (receiver === senderId.toString()) {
+    return { ok: false, status: 400, message: "You cannot send a swap request to yourself" };
   }
 
   const receiverUser = await User.findById(receiver);
   if (!receiverUser) {
-    return res.status(404).json({ message: "User not found" });
+    return { ok: false, status: 404, message: "User not found" };
   }
 
-  if (await activeSwapExists(req.user._id, receiver)) {
-    return res.status(409).json({ message: "You already have an active swap with this user" });
+  if (await activeSwapExists(senderId, receiver)) {
+    return { ok: false, status: 409, message: "You already have an active swap with this user" };
   }
 
-  if (await pendingRequestExists(req.user._id, receiver)) {
-    return res
-      .status(409)
-      .json({ message: "A pending request already exists between you and this user" });
+  if (await pendingRequestExists(senderId, receiver)) {
+    return {
+      ok: false,
+      status: 409,
+      message: "A pending request already exists between you and this user",
+    };
   }
 
   const request = await SwapRequest.create({
-    sender: req.user._id,
+    sender: senderId,
     receiver,
     message: message || "",
     senderTeaches,
     senderLearns,
   });
 
-  res.status(201).json({ request });
+  return { ok: true, request };
+}
+
+async function createSwapRequest(req, res) {
+  const { receiver, message, senderTeaches, senderLearns } = req.body;
+
+  const result = await createSwapRequestCore({
+    senderId: req.user._id,
+    receiver,
+    senderTeaches,
+    senderLearns,
+    message,
+  });
+
+  if (!result.ok) {
+    return res.status(result.status).json({ message: result.message });
+  }
+
+  res.status(201).json({ request: result.request });
 }
 
 async function getMyRequests(req, res) {
@@ -121,4 +141,4 @@ async function updateRequestStatus(req, res) {
   res.status(200).json({ request, swap });
 }
 
-module.exports = { createSwapRequest, getMyRequests, updateRequestStatus };
+module.exports = { createSwapRequest, createSwapRequestCore, getMyRequests, updateRequestStatus };

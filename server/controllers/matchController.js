@@ -47,4 +47,21 @@ async function getMatches(req, res) {
   res.status(200).json({ matches: results });
 }
 
-module.exports = { getMatches };
+// Same candidate universe, scoring, and skill-filter semantics as getMatches
+// (?skill=X&sort=best's top result) — just packaged as a plain function so
+// the chatbot's tool handler can call it directly, no HTTP round-trip.
+async function findBestMatchForSkill(user, skill) {
+  const candidates = await User.find({ _id: { $ne: user._id } }).lean();
+
+  const results = candidates
+    .map((candidate) => {
+      const { score, matchedSkills, reasons } = calculateMatch(user, candidate);
+      return { user: candidate, score, matchedSkills, reasons };
+    })
+    .filter((r) => skillMatches(r.user, skill));
+
+  results.sort((a, b) => b.score - a.score);
+  return results[0] || null;
+}
+
+module.exports = { getMatches, findBestMatchForSkill };

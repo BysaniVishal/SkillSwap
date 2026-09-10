@@ -24,6 +24,7 @@ app.use("/api/swap-requests", require("./routes/swapRequestRoutes"));
 app.use("/api/swaps", require("./routes/swapRoutes"));
 app.use("/api/sessions", require("./routes/sessionRoutes"));
 app.use("/api/reviews", require("./routes/reviewRoutes"));
+app.use("/api/assistant", require("./routes/assistantRoutes"));
 
 // route mounts will be added here in later phases
 

@@ -11,6 +11,7 @@ import Discover from "./pages/Discover";
 import Requests from "./pages/Requests";
 import Swaps from "./pages/Swaps";
 import SessionRoom from "./pages/SessionRoom";
+import ChatWidget from "./components/ChatWidget";
 
 function App() {
   return (
@@ -77,6 +78,7 @@ function App() {
           }
         />
       </Routes>
+      <ChatWidget />
     </>
   );
 }
