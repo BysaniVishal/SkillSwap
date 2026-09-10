@@ -1,6 +1,9 @@
+const { Type } = require("@google/genai");
 const { findBestMatchForSkill } = require("../controllers/matchController");
 const { createSwapRequestCore } = require("../controllers/swapRequestController");
 
+// Gemini's functionDeclarations use an OpenAPI-subset schema (Type enum,
+// no additionalProperties) — a narrower dialect than full JSON Schema.
 const TOOLS = [
   {
     name: "find_best_match",
@@ -8,13 +11,12 @@ const TOOLS = [
       "Search SkillSwap's user base for the best possible skill-exchange match for a skill the " +
       "current user wants to learn. Returns the top candidate (name, id, score 0-100, reasons, " +
       "what they teach) or found:false if nobody matches. Always call this before send_swap_request.",
-    input_schema: {
-      type: "object",
+    parameters: {
+      type: Type.OBJECT,
       properties: {
-        skill: { type: "string", description: "The skill the user wants to learn, e.g. Python" },
+        skill: { type: Type.STRING, description: "The skill the user wants to learn, e.g. Python" },
       },
       required: ["skill"],
-      additionalProperties: false,
     },
   },
   {
@@ -23,15 +25,14 @@ const TOOLS = [
       "Send a swap request from the current user to another user. Only call this after " +
       "find_best_match has returned a genuine, reasonably good candidate — do not call this " +
       "for a weak or nonexistent match; explain to the user instead.",
-    input_schema: {
-      type: "object",
+    parameters: {
+      type: Type.OBJECT,
       properties: {
-        receiverId: { type: "string", description: "The _id of the match candidate, from find_best_match" },
-        senderTeaches: { type: "string", description: "One of the current user's own skillsToTeach entries" },
-        senderLearns: { type: "string", description: "The skill the current user wants to learn (matches the request)" },
+        receiverId: { type: Type.STRING, description: "The _id of the match candidate, from find_best_match" },
+        senderTeaches: { type: Type.STRING, description: "One of the current user's own skillsToTeach entries" },
+        senderLearns: { type: Type.STRING, description: "The skill the current user wants to learn (matches the request)" },
       },
       required: ["receiverId", "senderTeaches", "senderLearns"],
-      additionalProperties: false,
     },
   },
 ];

@@ -1,4 +1,4 @@
-const { getClient, MODEL, Anthropic } = require("../utils/anthropicClient");
+const { getClient, MODEL } = require("../utils/geminiClient");
 const { TOOLS, executeTool } = require("../utils/assistantTools");
 
 const MAX_ITERATIONS = 6; // safety cap against runaway tool-call loops
@@ -33,37 +33,46 @@ When the user expresses intent to learn a specific skill:
 For general questions with no learn-intent, just answer using the "How SkillSwap works" information above — do not call any tools.`;
 }
 
-async function runAgentLoop({ client, system, messages, ctx }) {
-  const conversation = [...messages];
+function toGeminiContents(messages) {
+  return messages.map((m) => ({
+    role: m.role === "assistant" ? "model" : "user",
+    parts: [{ text: m.content }],
+  }));
+}
 
+async function runAgentLoop({ client, systemInstruction, contents, ctx }) {
   for (let i = 0; i < MAX_ITERATIONS; i++) {
-    const response = await client.messages.create({
+    const response = await client.models.generateContent({
       model: MODEL,
-      max_tokens: 1024,
-      system,
-      tools: TOOLS,
-      messages: conversation,
+      contents,
+      config: {
+        systemInstruction,
+        tools: [{ functionDeclarations: TOOLS }],
+      },
     });
 
-    if (response.stop_reason !== "tool_use") {
-      const textBlock = response.content.find((b) => b.type === "text");
-      return textBlock ? textBlock.text : "";
+    const calls = response.functionCalls;
+    if (!calls || calls.length === 0) {
+      return response.text || "";
     }
 
-    conversation.push({ role: "assistant", content: response.content });
+    // Preserve the model's own turn (including the functionCall parts)
+    // before appending our tool results, so the next round trip has the
+    // full, correct conversation history.
+    const modelParts = response.candidates[0].content.parts;
+    contents.push({ role: "model", parts: modelParts });
 
-    const toolUseBlocks = response.content.filter((b) => b.type === "tool_use");
-    const toolResults = [];
-    for (const block of toolUseBlocks) {
-      const result = await executeTool(block.name, block.input, ctx);
-      toolResults.push({
-        type: "tool_result",
-        tool_use_id: block.id,
-        content: JSON.stringify(result),
-        is_error: !!result.error,
+    const responseParts = [];
+    for (const call of calls) {
+      const result = await executeTool(call.name, call.args, ctx);
+      responseParts.push({
+        functionResponse: {
+          name: call.name,
+          response: { result },
+        },
       });
     }
-    conversation.push({ role: "user", content: toolResults });
+    contents.push({ role: "user", parts: responseParts });
   }
 
   return "I wasn't able to finish that — please try rephrasing.";
@@ -81,22 +90,20 @@ async function chat(req, res) {
   }
 
   const user = req.user.toObject();
-  const system = buildSystemPrompt(user);
+  const systemInstruction = buildSystemPrompt(user);
+  const contents = toGeminiContents(messages);
 
   try {
-    const reply = await runAgentLoop({ client, system, messages, ctx: { user } });
+    const reply = await runAgentLoop({ client, systemInstruction, contents, ctx: { user } });
     res.status(200).json({ reply });
   } catch (err) {
     console.error("Assistant chat error:", err);
-    if (
-      err instanceof Anthropic.AuthenticationError ||
-      err instanceof Anthropic.APIConnectionError ||
-      err instanceof Anthropic.RateLimitError ||
-      err instanceof Anthropic.APIError
-    ) {
-      return res.status(503).json({ message: "The AI assistant is temporarily unavailable." });
+    if (err.status === 429) {
+      return res
+        .status(503)
+        .json({ message: "The assistant is getting a lot of requests right now — try again in a moment." });
     }
-    res.status(500).json({ message: "Something went wrong talking to the assistant." });
+    res.status(503).json({ message: "The AI assistant is temporarily unavailable." });
   }
 }
 
