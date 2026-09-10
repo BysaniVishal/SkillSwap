@@ -8,12 +8,16 @@ async function getUserById(req, res) {
   res.status(200).json({ user });
 }
 
+// skillsToTeach is deliberately NOT in this whitelist — teaching
+// proficiency is earned via the skill quiz (see skillQuizController.js),
+// never self-declared. Letting it through here would let a client PUT an
+// arbitrary self-declared "Advanced" straight past the quiz gate, which
+// is exactly the mass-assignment hole this feature exists to close.
 const ALLOWED_FIELDS = [
   "name",
   "bio",
   "college",
   "profilePicture",
-  "skillsToTeach",
   "skillsToLearn",
   "availability",
   "learningPreference",
@@ -35,4 +39,15 @@ async function updateProfile(req, res) {
   res.status(200).json({ user });
 }
 
-module.exports = { getUserById, updateProfile };
+// Pure removal — no quiz needed, since removing a taught skill makes no
+// false claim about your ability. Kept as its own small route rather than
+// reopening skillsToTeach in ALLOWED_FIELDS, since that whitelist path
+// would accept a client-supplied array with zero per-item validation.
+async function removeTeachSkill(req, res) {
+  const skill = req.params.skill;
+  req.user.skillsToTeach = req.user.skillsToTeach.filter((s) => s.skill !== skill);
+  await req.user.save();
+  res.status(200).json({ skillsToTeach: req.user.skillsToTeach });
+}
+
+module.exports = { getUserById, updateProfile, removeTeachSkill };

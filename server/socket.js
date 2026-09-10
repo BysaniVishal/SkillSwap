@@ -2,6 +2,8 @@ const { Server } = require("socket.io");
 const jwt = require("jsonwebtoken");
 const User = require("./models/User");
 const Session = require("./models/Session");
+const Swap = require("./models/Swap");
+const Message = require("./models/Message");
 const { assertParticipant } = require("./controllers/sessionController");
 const { getScheduledDateTime, getSessionEndDateTime } = require("./utils/sessionTime");
 
@@ -64,6 +66,64 @@ function initSocket(httpServer) {
 
   io.on("connection", (socket) => {
     let currentSessionId = null;
+    // Independent from currentSessionId/the video-call rooms above — a swap's
+    // chat room (`swap:<id>`) is a separate namespace so a socket can be in
+    // both a live session room and its swap's chat room at once.
+    let currentSwapRoom = null;
+
+    socket.on("join-swap-chat", async ({ swapId }) => {
+      try {
+        const swap = await Swap.findById(swapId);
+        if (!swap) {
+          return socket.emit("swap-chat-error", { reason: "not-found" });
+        }
+        if (!(await assertParticipant(swap, socket.user._id))) {
+          return socket.emit("swap-chat-error", { reason: "forbidden" });
+        }
+
+        if (currentSwapRoom) socket.leave(currentSwapRoom);
+        currentSwapRoom = `swap:${swapId}`;
+        socket.join(currentSwapRoom);
+        socket.emit("joined-swap-chat", { swapId });
+      } catch (err) {
+        socket.emit("swap-chat-error", { reason: "not-found" });
+      }
+    });
+
+    socket.on("leave-swap-chat", () => {
+      if (currentSwapRoom) socket.leave(currentSwapRoom);
+      currentSwapRoom = null;
+    });
+
+    socket.on("send-swap-message", async ({ swapId, text }) => {
+      try {
+        if (!swapId || !text?.trim()) return;
+
+        const swap = await Swap.findById(swapId);
+        if (!swap || !(await assertParticipant(swap, socket.user._id))) {
+          return socket.emit("swap-chat-error", { reason: "forbidden" });
+        }
+        if (swap.status !== "active") {
+          return socket.emit("swap-chat-error", { reason: "swap-not-active" });
+        }
+
+        const message = await Message.create({
+          swap: swapId,
+          sender: socket.user._id,
+          text: text.trim(),
+        });
+
+        socket.to(`swap:${swapId}`).emit("swap-message", {
+          _id: message._id,
+          swap: swapId,
+          sender: { _id: socket.user._id, name: socket.user.name },
+          text: message.text,
+          createdAt: message.createdAt,
+        });
+      } catch (err) {
+        socket.emit("swap-chat-error", { reason: "send-failed" });
+      }
+    });
 
     socket.on("join-room", async ({ sessionId }) => {
       try {
@@ -187,7 +247,10 @@ function initSocket(httpServer) {
       if (currentSessionId) socket.to(currentSessionId).emit("session-ended");
     });
 
-    socket.on("disconnect", () => leaveCurrentRoom());
+    socket.on("disconnect", () => {
+      leaveCurrentRoom();
+      if (currentSwapRoom) socket.leave(currentSwapRoom);
+    });
 
     function leaveCurrentRoom() {
       if (!currentSessionId) return;

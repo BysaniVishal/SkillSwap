@@ -156,7 +156,7 @@ function Dashboard() {
           {requests === null && <Empty>Loading...</Empty>}
           {requests?.length === 0 && <Empty>No pending requests.</Empty>}
           <div className="space-y-2">
-            {requests?.map((r) => (
+            {requests?.filter((r) => r.sender).map((r) => (
               <div key={r._id} className="text-sm py-1.5">
                 <span className="text-slate-800">{r.sender.name}</span>
                 <span className="text-slate-500">
@@ -179,7 +179,7 @@ function Dashboard() {
           {activeSwaps === null && <Empty>Loading...</Empty>}
           {activeSwaps?.length === 0 && <Empty>No active swaps right now.</Empty>}
           <div className="space-y-2">
-            {activeSwaps?.map((s) => {
+            {activeSwaps?.filter((s) => s.userA && s.userB).map((s) => {
               const other = s.userA._id === user._id ? s.userB : s.userA;
               return (
                 <div key={s._id} className="text-sm py-1.5">

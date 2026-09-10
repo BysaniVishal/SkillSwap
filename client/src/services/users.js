@@ -11,3 +11,17 @@ export function updateProfile(data) {
 export function getSkillsMeta() {
   return api.get("/skills").then((res) => res.data);
 }
+
+export function getQuizQuestions(skill) {
+  return api.get(`/skill-quiz/${encodeURIComponent(skill)}`).then((res) => res.data);
+}
+
+export function submitQuiz({ skill, category, answers }) {
+  return api.post("/skill-quiz/submit", { skill, category, answers }).then((res) => res.data);
+}
+
+export function removeTeachSkill(skill) {
+  return api
+    .delete(`/users/skills/teach/${encodeURIComponent(skill)}`)
+    .then((res) => res.data.skillsToTeach);
+}

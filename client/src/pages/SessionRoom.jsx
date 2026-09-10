@@ -68,7 +68,7 @@ function SessionRoom() {
   }, [sessionId]);
 
   const other =
-    session && user
+    session && user && session.swap.userA && session.swap.userB
       ? session.swap.userA._id === user._id
         ? session.swap.userB
         : session.swap.userA

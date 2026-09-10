@@ -10,6 +10,12 @@ const STATUS_STYLES = {
 function RequestCard({ request, role, onAction }) {
   const otherUser = role === "sent" ? request.receiver : request.sender;
 
+  if (!otherUser) {
+    // The other user's account no longer exists (e.g. removed test data) —
+    // skip rendering rather than crash on a null reference.
+    return null;
+  }
+
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-4 flex items-start justify-between gap-4">
       <div>

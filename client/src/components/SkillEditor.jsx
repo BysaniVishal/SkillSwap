@@ -1,17 +1,23 @@
-function emptyRow(withGoal) {
-  return withGoal
-    ? { skill: "", category: "Other", proficiency: "Beginner", goal: "" }
-    : { skill: "", category: "Other", proficiency: "Beginner" };
+import SkillPicker from "./SkillPicker";
+
+function emptyRow(taxonomy) {
+  const firstCategory = taxonomy[0];
+  const firstTopic = firstCategory.topics[0];
+  const firstSkill = firstTopic.skills[0];
+  return { skill: firstSkill, category: firstCategory.category, proficiency: "Beginner", goal: "" };
 }
 
-function SkillEditor({ title, items, onChange, categories, proficiencyLevels, withGoal }) {
+// Used for "skills I want to learn" only — self-declared proficiency, no
+// verification needed there (see TeachSkillManager for the teach side,
+// which is quiz-gated instead of a free proficiency dropdown).
+function SkillEditor({ title, items, onChange, taxonomy, proficiencyLevels }) {
   function updateRow(index, field, value) {
     const next = items.map((row, i) => (i === index ? { ...row, [field]: value } : row));
     onChange(next);
   }
 
   function addRow() {
-    onChange([...items, emptyRow(withGoal)]);
+    onChange([...items, emptyRow(taxonomy)]);
   }
 
   function removeRow(index) {
@@ -38,26 +44,15 @@ function SkillEditor({ title, items, onChange, categories, proficiencyLevels, wi
       <div className="space-y-3">
         {items.map((row, index) => (
           <div key={index} className="border border-slate-200 rounded-md p-3 space-y-2">
-            <div className="grid grid-cols-2 gap-2">
-              <input
-                placeholder="Skill name"
-                value={row.skill}
-                onChange={(e) => updateRow(index, "skill", e.target.value)}
-                required
-                className="border border-slate-300 rounded-md px-2 py-1.5 text-sm"
-              />
-              <select
-                value={row.category}
-                onChange={(e) => updateRow(index, "category", e.target.value)}
-                className="border border-slate-300 rounded-md px-2 py-1.5 text-sm"
-              >
-                {categories.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <SkillPicker
+              taxonomy={taxonomy}
+              category={row.category}
+              skill={row.skill}
+              onChange={({ category, skill }) => {
+                const next = items.map((r, i) => (i === index ? { ...r, category, skill } : r));
+                onChange(next);
+              }}
+            />
             <div className="flex items-center gap-2">
               <select
                 value={row.proficiency}
@@ -78,14 +73,12 @@ function SkillEditor({ title, items, onChange, categories, proficiencyLevels, wi
                 Remove
               </button>
             </div>
-            {withGoal && (
-              <input
-                placeholder="Goal (optional) — e.g. Build a full-stack portfolio project"
-                value={row.goal || ""}
-                onChange={(e) => updateRow(index, "goal", e.target.value)}
-                className="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm"
-              />
-            )}
+            <input
+              placeholder="Goal (optional) — e.g. Build a full-stack portfolio project"
+              value={row.goal || ""}
+              onChange={(e) => updateRow(index, "goal", e.target.value)}
+              className="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+            />
           </div>
         ))}
       </div>

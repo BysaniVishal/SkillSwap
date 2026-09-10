@@ -88,4 +88,36 @@ const r4 = calculateMatch(weakTeacher, advancedLearner);
 const proficiencyReason = r4.reasons.find((r) => r.label.includes("Teacher skill levels"));
 assert(!proficiencyReason, "no proficiency-compatible reason when teacher is below learner's level");
 
+// Scenario 5: graded proficiency — a bigger gap above what the learner
+// needs should score strictly higher, not just "compatible" either way.
+function soloTeacher(proficiency) {
+  return {
+    skillsToTeach: [{ skill: "React", category: "Programming", proficiency }],
+    skillsToLearn: [],
+    availability: [],
+    learningPreference: "both",
+    rating: { average: 0, count: 0 },
+  };
+}
+const beginnerLearner = {
+  skillsToTeach: [],
+  skillsToLearn: [{ skill: "React", category: "Programming", proficiency: "Beginner" }],
+  availability: [],
+  learningPreference: "both",
+  rating: { average: 0, count: 0 },
+};
+
+const exactMatch = calculateMatch(soloTeacher("Beginner"), beginnerLearner);
+const oneAbove = calculateMatch(soloTeacher("Intermediate"), beginnerLearner);
+const twoAbove = calculateMatch(soloTeacher("Advanced"), beginnerLearner);
+
+assert(
+  oneAbove.score > exactMatch.score,
+  `Intermediate teaching a Beginner (${oneAbove.score}) scores higher than exact-level match (${exactMatch.score})`
+);
+assert(
+  twoAbove.score > oneAbove.score,
+  `Advanced teaching a Beginner (${twoAbove.score}) scores higher than Intermediate teaching a Beginner (${oneAbove.score})`
+);
+
 console.log("\nAll matching.js scenarios passed.");

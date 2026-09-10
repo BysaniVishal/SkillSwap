@@ -70,6 +70,19 @@ function preferenceCompatible(prefA, prefB) {
   return prefA === prefB;
 }
 
+// Graded, not binary: a teacher who only just meets what the learner asked
+// for is a fine match, but a teacher whose level sits well above the ask
+// can teach it more effectively — explain more angles, handle harder
+// questions — so a bigger gap earns proportionally more credit, up to the
+// largest possible gap on a 3-level scale (Advanced teaching a Beginner).
+function proficiencyPairScore(teacherProficiency, learnerProficiency) {
+  const gap = PROFICIENCY_RANK[teacherProficiency] - PROFICIENCY_RANK[learnerProficiency];
+  if (gap < 0) return 0; // teacher doesn't meet what the learner needs
+  if (gap === 0) return 0.75; // meets it exactly, no buffer above the ask
+  if (gap === 1) return 0.9; // comfortably exceeds it
+  return 1.0; // gap === 2: teaches it really well
+}
+
 /**
  * calculateMatch(userA, userB)
  * Pure function — takes two plain user objects, returns:
@@ -114,20 +127,25 @@ function calculateMatch(userA, userB) {
     });
   }
 
-  // 3. Proficiency compatibility — teacher's level should meet or exceed
-  // what the learner needs, for every matched pair, averaged.
+  // 3. Proficiency compatibility — graded by how far the teacher's level
+  // sits above what the learner needs, averaged across every matched pair.
   const allMatches = [...aTeachesB, ...bTeachesA];
   if (allMatches.length > 0) {
-    const compatibleCount = allMatches.filter(
-      (m) => PROFICIENCY_RANK[m.teacherProficiency] >= PROFICIENCY_RANK[m.learnerProficiency]
-    ).length;
-    const proficiencyPoints = Math.round(
-      (compatibleCount / allMatches.length) * WEIGHTS.PROFICIENCY
-    );
+    const avgFraction =
+      allMatches.reduce(
+        (sum, m) => sum + proficiencyPairScore(m.teacherProficiency, m.learnerProficiency),
+        0
+      ) / allMatches.length;
+    const proficiencyPoints = Math.round(avgFraction * WEIGHTS.PROFICIENCY);
     score += proficiencyPoints;
     if (proficiencyPoints > 0) {
+      const anyExceeds = allMatches.some(
+        (m) => PROFICIENCY_RANK[m.teacherProficiency] > PROFICIENCY_RANK[m.learnerProficiency]
+      );
       reasons.push({
-        label: "Teacher skill levels are strong enough to meet the learning goals",
+        label: anyExceeds
+          ? "Teacher skill levels comfortably exceed the learning goals"
+          : "Teacher skill levels meet the learning goals",
         points: proficiencyPoints,
       });
     }

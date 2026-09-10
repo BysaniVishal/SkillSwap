@@ -54,7 +54,9 @@ function Swaps() {
       )}
 
       <div className="space-y-3">
-        {swaps.map((swap) => {
+        {swaps
+          .filter((swap) => swap.userA && swap.userB)
+          .map((swap) => {
           const isUserA = swap.userA._id === user._id;
           const other = isUserA ? swap.userB : swap.userA;
           const iTeach = isUserA ? swap.skills.userATeaches : swap.skills.userBTeaches;
@@ -81,20 +83,30 @@ function Swaps() {
                   </span>
                 </div>
 
-                {swap.status === "active" && (
+                {swap.status !== "cancelled" && (
                   <div className="flex flex-col gap-2 shrink-0">
-                    <button
-                      onClick={() => handleStatus(swap._id, "completed")}
-                      className="bg-slate-900 text-white text-sm rounded-md px-3 py-1.5 hover:bg-slate-700"
+                    <Link
+                      to={`/swaps/${swap._id}/chat`}
+                      className="text-center border border-slate-300 text-sm rounded-md px-3 py-1.5 hover:bg-slate-50"
                     >
-                      Mark Completed
-                    </button>
-                    <button
-                      onClick={() => handleStatus(swap._id, "cancelled")}
-                      className="border border-slate-300 text-sm rounded-md px-3 py-1.5 hover:bg-slate-50"
-                    >
-                      Cancel
-                    </button>
+                      Chat
+                    </Link>
+                    {swap.status === "active" && (
+                      <>
+                        <button
+                          onClick={() => handleStatus(swap._id, "completed")}
+                          className="bg-slate-900 text-white text-sm rounded-md px-3 py-1.5 hover:bg-slate-700"
+                        >
+                          Mark Completed
+                        </button>
+                        <button
+                          onClick={() => handleStatus(swap._id, "cancelled")}
+                          className="border border-slate-300 text-sm rounded-md px-3 py-1.5 hover:bg-slate-50"
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
               </div>

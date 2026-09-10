@@ -11,6 +11,7 @@ import Discover from "./pages/Discover";
 import Requests from "./pages/Requests";
 import Swaps from "./pages/Swaps";
 import SessionRoom from "./pages/SessionRoom";
+import SwapChatPage from "./pages/SwapChatPage";
 import ChatWidget from "./components/ChatWidget";
 
 function App() {
@@ -74,6 +75,14 @@ function App() {
           element={
             <ProtectedRoute>
               <SessionRoom />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/swaps/:swapId/chat"
+          element={
+            <ProtectedRoute>
+              <SwapChatPage />
             </ProtectedRoute>
           }
         />
