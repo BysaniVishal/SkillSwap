@@ -10,7 +10,7 @@ const sessionSchema = new mongoose.Schema(
     notes: { type: String, default: "", maxlength: 500 },
     status: {
       type: String,
-      enum: ["upcoming", "completed", "cancelled"],
+      enum: ["upcoming", "completed", "cancelled", "missed"],
       default: "upcoming",
     },
   },

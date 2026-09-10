@@ -33,6 +33,15 @@ export function isJoinable(session) {
   return Date.now() >= getScheduledDateTime(session).getTime() - EARLY_JOIN_BUFFER_MS;
 }
 
+// The instant the scheduled window closes — scheduled start + duration.
+export function getSessionEndDateTime(session) {
+  return new Date(getScheduledDateTime(session).getTime() + session.duration * 60 * 1000);
+}
+
+export function isExpired(session) {
+  return Date.now() > getSessionEndDateTime(session).getTime();
+}
+
 // Formats a Date explicitly in IST regardless of the viewer's own system
 // timezone, so "the time we scheduled" always reads the same for both
 // participants.

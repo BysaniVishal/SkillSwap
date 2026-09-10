@@ -4,6 +4,7 @@ import { createSession, getSessions, updateSessionStatus } from "../services/ses
 import {
   getScheduledDateTime,
   isJoinable,
+  isExpired,
   formatIST,
   formatSessionDate,
   todayIST,
@@ -13,6 +14,7 @@ const STATUS_STYLES = {
   upcoming: "bg-blue-100 text-blue-800",
   completed: "bg-emerald-100 text-emerald-800",
   cancelled: "bg-slate-100 text-slate-600",
+  missed: "bg-amber-100 text-amber-800",
 };
 
 const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
@@ -86,7 +88,8 @@ function SessionPanel({ swap }) {
 
       <div className="space-y-2">
         {sessions.map((s) => {
-          const joinable = tick >= 0 && s.status === "upcoming" && isJoinable(s);
+          const expiredButStale = tick >= 0 && s.status === "upcoming" && isExpired(s);
+          const joinable = s.status === "upcoming" && isJoinable(s) && !expiredButStale;
           return (
             <div key={s._id} className="flex items-center justify-between text-sm border-b border-slate-100 pb-2">
               <div>
@@ -98,7 +101,7 @@ function SessionPanel({ swap }) {
                 <span className={`text-xs font-medium px-2 py-0.5 rounded-full capitalize ${STATUS_STYLES[s.status]}`}>
                   {s.status}
                 </span>
-                {s.status === "upcoming" && (
+                {s.status === "upcoming" && !expiredButStale && (
                   <>
                     {joinable ? (
                       <Link
@@ -122,6 +125,11 @@ function SessionPanel({ swap }) {
                       Cancel
                     </button>
                   </>
+                )}
+                {expiredButStale && (
+                  <span className="text-xs text-amber-700 border border-amber-200 bg-amber-50 rounded-md px-2 py-1 cursor-default">
+                    Session window closed
+                  </span>
                 )}
               </div>
             </div>

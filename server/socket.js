@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const User = require("./models/User");
 const Session = require("./models/Session");
 const { assertParticipant } = require("./controllers/sessionController");
-const { getScheduledDateTime } = require("./utils/sessionTime");
+const { getScheduledDateTime, getSessionEndDateTime } = require("./utils/sessionTime");
 
 // Joining is allowed from this many minutes before the scheduled start —
 // a small grace window, not an open-ended "anytime while upcoming" policy.
@@ -28,6 +28,15 @@ function participantList(participants) {
     userId: p.userId,
     name: p.name,
   }));
+}
+
+// Lets other modules (sessionController's lazy "mark missed" sweep) check
+// whether a session is actually live right now, using the same in-memory
+// room map the auto-complete-on-leave logic already trusts as ground
+// truth — avoids a second, potentially-drifting notion of "is this live."
+function hasActiveRoom(sessionId) {
+  const room = rooms.get(sessionId);
+  return !!room && room.participants.size > 0;
 }
 
 function initSocket(httpServer) {
@@ -76,6 +85,21 @@ function initSocket(httpServer) {
           return socket.emit("join-error", {
             reason: "too-early",
             scheduledAt: scheduledAt.toISOString(),
+          });
+        }
+
+        // No grace buffer here, deliberately — asymmetric with the early
+        // buffer above. Only blocks *new* joins after the window closes;
+        // an already-in-progress call (see leaveCurrentRoom below) is never
+        // forcibly cut off just because the scheduled duration elapsed.
+        const expiresAt = getSessionEndDateTime(session).getTime();
+        if (Date.now() > expiresAt) {
+          Session.updateOne({ _id: sessionId, status: "upcoming" }, { status: "missed" }).catch(
+            (err) => console.error("Auto-mark missed failed:", err)
+          );
+          return socket.emit("join-error", {
+            reason: "session-expired",
+            expiredAt: new Date(expiresAt).toISOString(),
           });
         }
 
@@ -199,3 +223,4 @@ function initSocket(httpServer) {
 }
 
 module.exports = initSocket;
+module.exports.hasActiveRoom = hasActiveRoom;

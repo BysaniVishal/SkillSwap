@@ -27,4 +27,9 @@ function getScheduledDateTime(session) {
   return new Date(istWallClockAsUtcMs - IST_OFFSET_MS);
 }
 
-module.exports = { getScheduledDateTime };
+// The instant the scheduled window closes — scheduled start + duration.
+function getSessionEndDateTime(session) {
+  return new Date(getScheduledDateTime(session).getTime() + session.duration * 60 * 1000);
+}
+
+module.exports = { getScheduledDateTime, getSessionEndDateTime };

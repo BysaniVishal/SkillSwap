@@ -18,6 +18,8 @@ function joinErrorMessage(error) {
     forbidden: "You're not a participant in this session.",
     "room-full": "This session's room already has two participants.",
     "session-not-active": "This session is no longer upcoming.",
+    "session-expired":
+      "This session's scheduled window has passed without anyone joining, so it can no longer be started.",
     "not-found": "Session not found.",
     "media-denied": "Camera/mic access was denied. You can still use chat and the whiteboard.",
   };
@@ -40,6 +42,7 @@ function SessionRoom() {
   const [session, setSession] = useState(null);
   const [tab, setTab] = useState("chat");
   const [ending, setEnding] = useState(false);
+  const [confirmingEnd, setConfirmingEnd] = useState(false);
 
   const {
     localStream,
@@ -170,14 +173,34 @@ function SessionRoom() {
               >
                 Leave Session
               </button>
-              <button
-                onClick={handleEndSession}
-                disabled={ending || sessionEnded}
-                title="Ends the session for both of you and marks it completed"
-                className="text-sm rounded-md px-3 py-1.5 bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
-              >
-                {ending ? "Ending..." : "End Session"}
-              </button>
+              {!confirmingEnd ? (
+                <button
+                  onClick={() => setConfirmingEnd(true)}
+                  disabled={ending || sessionEnded}
+                  title="Ends the session for both of you and marks it completed"
+                  className="text-sm rounded-md px-3 py-1.5 bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                >
+                  End Session
+                </button>
+              ) : (
+                <div className="flex items-center gap-2 text-sm bg-red-50 border border-red-200 rounded-md px-3 py-1.5">
+                  <span className="text-red-700">End for both of you?</span>
+                  <button
+                    onClick={handleEndSession}
+                    disabled={ending}
+                    className="text-white bg-red-600 hover:bg-red-700 rounded-md px-2 py-1 disabled:opacity-50"
+                  >
+                    {ending ? "Ending..." : "Confirm"}
+                  </button>
+                  <button
+                    onClick={() => setConfirmingEnd(false)}
+                    disabled={ending}
+                    className="text-slate-600 hover:text-slate-900 rounded-md px-2 py-1 border border-slate-300 disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
