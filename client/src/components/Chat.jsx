@@ -36,7 +36,7 @@ function Chat() {
           <p className="text-sm text-slate-400 italic">No messages yet.</p>
         )}
         {messages.map((m, i) => (
-          <div key={i} className="text-sm">
+          <div key={i} className="text-sm bg-slate-50 rounded-xl px-3 py-1.5">
             <span className="font-medium text-slate-700">{m.from}: </span>
             <span className="text-slate-600">{m.text}</span>
           </div>
@@ -48,11 +48,11 @@ function Chat() {
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Type a message..."
-          className="flex-1 border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+          className="flex-1 border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
         />
         <button
           type="submit"
-          className="bg-slate-900 text-white text-sm rounded-md px-3 py-1.5 hover:bg-slate-700"
+          className="bg-slate-900 text-white text-sm rounded-xl px-3 py-1.5 hover:bg-slate-700"
         >
           Send
         </button>

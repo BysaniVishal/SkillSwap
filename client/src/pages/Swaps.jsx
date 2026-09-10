@@ -3,18 +3,32 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getMySwaps, updateSwapStatus } from "../services/swaps";
 import SwapDetail from "../components/SwapDetail";
-
-const STATUS_STYLES = {
-  active: "bg-emerald-100 text-emerald-800",
-  completed: "bg-blue-100 text-blue-800",
-  cancelled: "bg-slate-100 text-slate-600",
-};
+import Card from "../components/ui/Card";
+import Alert from "../components/ui/Alert";
+import Button from "../components/ui/Button";
+import StatusPill from "../components/ui/StatusPill";
+import { useInView } from "../hooks/useInView";
 
 function Swaps() {
   const { user } = useAuth();
   const [swaps, setSwaps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [expandedIds, setExpandedIds] = useState(new Set());
+  const [listRef, listInView] = useInView({ threshold: 0.05 });
+
+  function toggleExpanded(id) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function openForScheduling(id) {
+    setExpandedIds((prev) => new Set(prev).add(id));
+  }
 
   function load() {
     setLoading(true);
@@ -36,13 +50,13 @@ function Swaps() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-slate-900 mb-6">My Swaps</h1>
+    <div className="max-w-3xl mx-auto px-4 py-8 bg-slate-100 min-h-[calc(100vh-4rem)]">
+      <h1 className="font-display text-2xl font-bold text-slate-900 mb-6">My Swaps</h1>
 
       {error && (
-        <div className="mb-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+        <Alert variant="error" className="mb-4">
           {error}
-        </div>
+        </Alert>
       )}
 
       {loading && <div className="text-slate-500 py-8 text-center">Loading...</div>}
@@ -53,7 +67,7 @@ function Swaps() {
         </div>
       )}
 
-      <div className="space-y-3">
+      <div ref={listRef} className={`reveal ${listInView ? "reveal-visible" : ""} space-y-3`}>
         {swaps
           .filter((swap) => swap.userA && swap.userB)
           .map((swap) => {
@@ -63,7 +77,7 @@ function Swaps() {
           const iLearn = isUserA ? swap.skills.userBTeaches : swap.skills.userATeaches;
 
           return (
-            <div key={swap._id} className="bg-white border border-slate-200 rounded-xl p-4">
+            <Card key={swap._id}>
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <Link
@@ -76,35 +90,35 @@ function Swaps() {
                   <p className="text-sm text-slate-700 mt-2">
                     You teach <strong>{iTeach}</strong> · You learn <strong>{iLearn}</strong>
                   </p>
-                  <span
-                    className={`inline-block mt-2 text-xs font-medium px-2 py-0.5 rounded-full capitalize ${STATUS_STYLES[swap.status]}`}
-                  >
-                    {swap.status}
-                  </span>
+                  <div className="mt-2">
+                    <StatusPill status={swap.status} />
+                  </div>
                 </div>
 
                 {swap.status !== "cancelled" && (
                   <div className="flex flex-col gap-2 shrink-0">
-                    <Link
-                      to={`/swaps/${swap._id}/chat`}
-                      className="text-center border border-slate-300 text-sm rounded-md px-3 py-1.5 hover:bg-slate-50"
-                    >
+                    <Button variant="secondary" size="sm" to={`/swaps/${swap._id}/chat`}>
                       Chat
-                    </Link>
+                    </Button>
                     {swap.status === "active" && (
                       <>
-                        <button
+                        <Button size="sm" onClick={() => openForScheduling(swap._id)}>
+                          Schedule Session
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
                           onClick={() => handleStatus(swap._id, "completed")}
-                          className="bg-slate-900 text-white text-sm rounded-md px-3 py-1.5 hover:bg-slate-700"
                         >
                           Mark Completed
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
                           onClick={() => handleStatus(swap._id, "cancelled")}
-                          className="border border-slate-300 text-sm rounded-md px-3 py-1.5 hover:bg-slate-50"
                         >
                           Cancel
-                        </button>
+                        </Button>
                       </>
                     )}
                   </div>
@@ -112,11 +126,15 @@ function Swaps() {
               </div>
 
               {swap.status !== "cancelled" && (
-                <div className="mt-3 pt-3 border-t border-slate-100">
-                  <SwapDetail swap={swap} />
+                <div className="mt-3 pt-3 border-t border-slate-200">
+                  <SwapDetail
+                    swap={swap}
+                    expanded={expandedIds.has(swap._id)}
+                    onToggle={() => toggleExpanded(swap._id)}
+                  />
                 </div>
               )}
-            </div>
+            </Card>
           );
         })}
       </div>

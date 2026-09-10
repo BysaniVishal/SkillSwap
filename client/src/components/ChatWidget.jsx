@@ -43,9 +43,9 @@ function ChatWidget() {
   return (
     <div className="fixed bottom-4 right-4 z-50">
       {open && (
-        <div className="mb-3 w-80 h-[28rem] bg-white border border-slate-200 rounded-xl shadow-lg flex flex-col overflow-hidden">
+        <div className="mb-3 w-80 h-[28rem] bg-white border border-slate-200 rounded-2xl shadow-xl flex flex-col overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-900 text-white">
-            <span className="text-sm font-semibold">SkillSwap Assistant</span>
+            <span className="font-display text-sm font-semibold">SkillSwap Assistant</span>
             <button onClick={() => setOpen(false)} className="text-slate-300 hover:text-white text-sm">
               ✕
             </button>
@@ -60,7 +60,7 @@ function ChatWidget() {
             {messages.map((m, i) => (
               <div
                 key={i}
-                className={`text-sm px-3 py-2 rounded-lg max-w-[85%] ${
+                className={`text-sm px-3 py-2 rounded-xl max-w-[85%] ${
                   m.role === "user"
                     ? "bg-slate-900 text-white ml-auto"
                     : "bg-slate-100 text-slate-800"
@@ -83,12 +83,12 @@ function ChatWidget() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Type a message..."
-              className="flex-1 border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+              className="flex-1 border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
             />
             <button
               type="submit"
               disabled={loading}
-              className="bg-slate-900 text-white text-sm rounded-md px-3 py-1.5 hover:bg-slate-700 disabled:opacity-50"
+              className="bg-slate-900 text-white text-sm rounded-xl px-3 py-1.5 hover:bg-slate-700 disabled:opacity-50"
             >
               Send
             </button>
@@ -98,7 +98,7 @@ function ChatWidget() {
 
       <button
         onClick={() => setOpen(!open)}
-        className="bg-slate-900 text-white rounded-full w-14 h-14 shadow-lg hover:bg-slate-700 flex items-center justify-center text-2xl"
+        className="bg-slate-900 text-white rounded-full w-14 h-14 shadow-lg hover:bg-slate-700 hover:-translate-y-0.5 transition flex items-center justify-center text-2xl"
         title="SkillSwap Assistant"
       >
         {open ? "×" : "💬"}

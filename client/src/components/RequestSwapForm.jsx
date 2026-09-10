@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { createSwapRequest } from "../services/swapRequests";
+import Card from "./ui/Card";
+import Alert from "./ui/Alert";
+import Button from "./ui/Button";
 
 function RequestSwapForm({ me, profile }) {
   const [senderTeaches, setSenderTeaches] = useState(me.skillsToTeach?.[0]?.skill || "");
@@ -30,88 +33,82 @@ function RequestSwapForm({ me, profile }) {
 
   if (status === "sent") {
     return (
-      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-6 text-emerald-700 text-sm">
-        Swap request sent to {profile.name}.
-      </div>
+      <Card padding="lg">
+        <Alert variant="success">Swap request sent to {profile.name}.</Alert>
+      </Card>
     );
   }
 
   if (!canSend) {
     return (
-      <div className="bg-white border border-slate-200 rounded-xl p-6 text-sm text-slate-500">
+      <Card padding="lg" className="text-sm text-slate-500">
         {me.skillsToTeach?.length === 0
           ? "Add a skill you can teach to your profile before sending swap requests."
           : `${profile.name} hasn't listed any skills they can teach yet.`}
-      </div>
+      </Card>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
-      <h2 className="text-sm font-semibold text-slate-800">Request a swap</h2>
+    <Card padding="lg" className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <h2 className="text-sm font-semibold text-slate-800">Request a swap</h2>
 
-      {error && (
-        <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">
-          {error}
+        {error && <Alert variant="error">{error}</Alert>}
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            You'll teach {profile.name}
+          </label>
+          <select
+            value={senderTeaches}
+            onChange={(e) => setSenderTeaches(e.target.value)}
+            className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+          >
+            {me.skillsToTeach.map((s, i) => (
+              <option key={i} value={s.skill}>
+                {s.skill} ({s.proficiency})
+              </option>
+            ))}
+          </select>
         </div>
-      )}
 
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">
-          You'll teach {profile.name}
-        </label>
-        <select
-          value={senderTeaches}
-          onChange={(e) => setSenderTeaches(e.target.value)}
-          className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm"
-        >
-          {me.skillsToTeach.map((s, i) => (
-            <option key={i} value={s.skill}>
-              {s.skill} ({s.proficiency})
-            </option>
-          ))}
-        </select>
-      </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            You'll learn from {profile.name}
+          </label>
+          <select
+            value={senderLearns}
+            onChange={(e) => setSenderLearns(e.target.value)}
+            className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+          >
+            {profile.skillsToTeach.map((s, i) => (
+              <option key={i} value={s.skill}>
+                {s.skill} ({s.proficiency})
+              </option>
+            ))}
+          </select>
+        </div>
 
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">
-          You'll learn from {profile.name}
-        </label>
-        <select
-          value={senderLearns}
-          onChange={(e) => setSenderLearns(e.target.value)}
-          className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm"
-        >
-          {profile.skillsToTeach.map((s, i) => (
-            <option key={i} value={s.skill}>
-              {s.skill} ({s.proficiency})
-            </option>
-          ))}
-        </select>
-      </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Message (optional)
+          </label>
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            rows={2}
+            maxLength={500}
+            placeholder={`I can teach you ${senderTeaches} and I'd like to learn ${senderLearns} from you.`}
+            className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+          />
+        </div>
 
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">
-          Message (optional)
-        </label>
-        <textarea
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          rows={2}
-          maxLength={500}
-          placeholder={`I can teach you ${senderTeaches} and I'd like to learn ${senderLearns} from you.`}
-          className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm"
-        />
-      </div>
-
-      <button
-        type="submit"
-        disabled={status === "sending"}
-        className="bg-slate-900 text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-slate-700 disabled:opacity-50"
-      >
-        {status === "sending" ? "Sending..." : "Send swap request"}
-      </button>
-    </form>
+        <Button type="submit" disabled={status === "sending"}>
+          {status === "sending" ? "Sending..." : "Send swap request"}
+        </Button>
+      </form>
+    </Card>
   );
 }
 

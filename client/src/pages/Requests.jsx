@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import { getMyRequests, updateRequestStatus } from "../services/swapRequests";
 import RequestCard from "../components/RequestCard";
+import Alert from "../components/ui/Alert";
+import { useInView } from "../hooks/useInView";
 
 function Requests() {
   const [data, setData] = useState({ sent: [], received: [] });
   const [tab, setTab] = useState("received");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [listRef, listInView] = useInView({ threshold: 0.05 });
 
   function load() {
     setLoading(true);
@@ -31,13 +34,13 @@ function Requests() {
   const pendingReceivedCount = data.received.filter((r) => r.status === "pending").length;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-slate-900 mb-6">Swap Requests</h1>
+    <div className="max-w-3xl mx-auto px-4 py-8 bg-slate-100 min-h-[calc(100vh-4rem)]">
+      <h1 className="font-display text-2xl font-bold text-slate-900 mb-6">Swap Requests</h1>
 
-      <div className="flex gap-2 mb-6 border-b border-slate-200">
+      <div className="flex gap-1 mb-6 border-b border-slate-200">
         <button
           onClick={() => setTab("received")}
-          className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
+          className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition ${
             tab === "received"
               ? "border-slate-900 text-slate-900"
               : "border-transparent text-slate-500 hover:text-slate-700"
@@ -47,7 +50,7 @@ function Requests() {
         </button>
         <button
           onClick={() => setTab("sent")}
-          className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
+          className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition ${
             tab === "sent"
               ? "border-slate-900 text-slate-900"
               : "border-transparent text-slate-500 hover:text-slate-700"
@@ -58,9 +61,9 @@ function Requests() {
       </div>
 
       {error && (
-        <div className="mb-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+        <Alert variant="error" className="mb-4">
           {error}
-        </div>
+        </Alert>
       )}
 
       {loading && <div className="text-slate-500 py-8 text-center">Loading...</div>}
@@ -71,7 +74,7 @@ function Requests() {
         </div>
       )}
 
-      <div className="space-y-3">
+      <div ref={listRef} className={`reveal ${listInView ? "reveal-visible" : ""} space-y-3`}>
         {list.map((r) => (
           <RequestCard key={r._id} request={r} role={tab} onAction={handleAction} />
         ))}

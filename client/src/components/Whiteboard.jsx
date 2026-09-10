@@ -77,10 +77,10 @@ function Whiteboard() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex justify-end p-2 border-b border-slate-200">
+      <div className="flex justify-end p-2 border-b border-slate-200 bg-white">
         <button
           onClick={handleClear}
-          className="text-xs text-slate-500 hover:text-slate-900 border border-slate-300 rounded-md px-2 py-1"
+          className="text-xs text-slate-500 hover:text-slate-900 border border-slate-300 rounded-xl px-2 py-1"
         >
           Clear board
         </button>

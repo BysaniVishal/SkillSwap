@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { getMessages } from "../services/messages";
 import { connectSocket } from "../services/socket";
+import Alert from "./ui/Alert";
 
 const ERROR_MESSAGES = {
   forbidden: "You're not a participant in this swap.",
@@ -82,11 +83,11 @@ function SwapChat({ swap }) {
   }
 
   return (
-    <div className="flex flex-col h-full bg-white border border-slate-200 rounded-xl overflow-hidden">
+    <div className="flex flex-col h-full bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
       {error && (
-        <div className="text-sm text-amber-700 bg-amber-50 border-b border-amber-200 px-3 py-2">
+        <Alert variant="warning" className="rounded-none border-x-0 border-t-0">
           {error}
-        </div>
+        </Alert>
       )}
 
       <div className="flex-1 overflow-y-auto space-y-2 p-3">
@@ -95,7 +96,7 @@ function SwapChat({ swap }) {
           <p className="text-sm text-slate-400 italic">No messages yet. Say hello!</p>
         )}
         {messages.map((m) => (
-          <div key={m._id} className="text-sm">
+          <div key={m._id} className="text-sm bg-slate-50 rounded-xl px-3 py-1.5">
             <span className="font-medium text-slate-700">
               {m.sender._id === user._id ? "You" : m.sender.name}:{" "}
             </span>
@@ -111,12 +112,12 @@ function SwapChat({ swap }) {
           onChange={(e) => setText(e.target.value)}
           placeholder={isActive ? "Type a message..." : "This swap is no longer active"}
           disabled={!isActive}
-          className="flex-1 border border-slate-300 rounded-md px-2 py-1.5 text-sm disabled:bg-slate-50 disabled:text-slate-400"
+          className="flex-1 border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 disabled:bg-slate-50 disabled:text-slate-400"
         />
         <button
           type="submit"
           disabled={!isActive}
-          className="bg-slate-900 text-white text-sm rounded-md px-3 py-1.5 hover:bg-slate-700 disabled:opacity-40 disabled:hover:bg-slate-900"
+          className="bg-slate-900 text-white text-sm rounded-xl px-3 py-1.5 hover:bg-slate-700 disabled:opacity-40 disabled:hover:bg-slate-900"
         >
           Send
         </button>

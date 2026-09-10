@@ -47,7 +47,7 @@ function SkillPicker({ taxonomy, category, skill, onChange }) {
       <select
         value={category}
         onChange={(e) => handleCategoryChange(e.target.value)}
-        className="border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+        className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
       >
         {taxonomy.map((c) => (
           <option key={c.category} value={c.category}>
@@ -58,7 +58,7 @@ function SkillPicker({ taxonomy, category, skill, onChange }) {
       <select
         value={topic}
         onChange={(e) => handleTopicChange(e.target.value)}
-        className="border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+        className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
       >
         {catEntry.topics.map((t) => (
           <option key={t.topic} value={t.topic}>
@@ -69,7 +69,7 @@ function SkillPicker({ taxonomy, category, skill, onChange }) {
       <select
         value={skill}
         onChange={(e) => handleSkillChange(e.target.value)}
-        className="border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+        className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
       >
         {topicEntry.skills.map((s) => (
           <option key={s} value={s}>

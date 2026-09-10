@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import Card from "../components/ui/Card";
+import Alert from "../components/ui/Alert";
+import Button from "../components/ui/Button";
 
 function Login() {
   const { login } = useAuth();
@@ -28,15 +31,15 @@ function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
-      <div className="w-full max-w-sm bg-white p-8 rounded-xl border border-slate-200">
-        <h1 className="text-2xl font-bold text-slate-900 mb-1">Welcome back</h1>
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-slate-100 px-4">
+      <Card padding="lg" className="w-full max-w-sm">
+        <h1 className="font-display text-2xl font-bold text-slate-900 mb-1">Welcome back</h1>
         <p className="text-slate-500 text-sm mb-6">Log in to continue swapping skills.</p>
 
         {error && (
-          <div className="mb-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+          <Alert variant="error" className="mb-4">
             {error}
-          </div>
+          </Alert>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -62,13 +65,9 @@ function Login() {
               className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
             />
           </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-slate-900 text-white rounded-md py-2 text-sm font-medium hover:bg-slate-700 disabled:opacity-50"
-          >
+          <Button type="submit" disabled={loading} className="w-full">
             {loading ? "Logging in..." : "Log in"}
-          </button>
+          </Button>
         </form>
 
         <p className="text-sm text-slate-500 mt-4 text-center">
@@ -77,7 +76,7 @@ function Login() {
             Sign up
           </Link>
         </p>
-      </div>
+      </Card>
     </div>
   );
 }

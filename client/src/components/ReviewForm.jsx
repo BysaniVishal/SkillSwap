@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { createReview } from "../services/reviews";
+import Button from "./ui/Button";
+import Alert from "./ui/Alert";
 
 function ReviewForm({ swapId, onSubmitted }) {
   const [rating, setRating] = useState(5);
@@ -22,9 +24,9 @@ function ReviewForm({ swapId, onSubmitted }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="border border-slate-200 rounded-lg p-3 space-y-2">
+    <form onSubmit={handleSubmit} className="border border-slate-200 rounded-xl p-3 space-y-2 bg-white">
       <p className="text-sm font-medium text-slate-700">Leave a review</p>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <Alert variant="error">{error}</Alert>}
       <div className="flex gap-1">
         {[1, 2, 3, 4, 5].map((n) => (
           <button
@@ -43,15 +45,11 @@ function ReviewForm({ swapId, onSubmitted }) {
         rows={2}
         maxLength={500}
         placeholder="How was the swap?"
-        className="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+        className="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
       />
-      <button
-        type="submit"
-        disabled={saving}
-        className="bg-slate-900 text-white text-sm rounded-md px-3 py-1.5 hover:bg-slate-700 disabled:opacity-50"
-      >
+      <Button type="submit" size="sm" disabled={saving}>
         {saving ? "Submitting..." : "Submit review"}
-      </button>
+      </Button>
     </form>
   );
 }

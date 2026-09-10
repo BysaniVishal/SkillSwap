@@ -1,11 +1,23 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getUser } from "../services/users";
 import SkillBadge from "../components/SkillBadge";
 import RequestSwapForm from "../components/RequestSwapForm";
 import ReviewCard from "../components/ReviewCard";
 import { getReviews } from "../services/reviews";
+import Card from "../components/ui/Card";
+import Button from "../components/ui/Button";
+import { useInView } from "../hooks/useInView";
+
+function ProfileSection({ children }) {
+  const [ref, inView] = useInView({ threshold: 0.1 });
+  return (
+    <div ref={ref} className={`reveal ${inView ? "reveal-visible" : ""}`}>
+      <Card padding="lg">{children}</Card>
+    </div>
+  );
+}
 
 function PublicProfile() {
   const { id } = useParams();
@@ -34,20 +46,17 @@ function PublicProfile() {
   const isMe = me && me._id === profile._id;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
-      <div className="bg-white border border-slate-200 rounded-xl p-6">
+    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6 bg-slate-100 min-h-[calc(100vh-4rem)]">
+      <ProfileSection>
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">{profile.name}</h1>
+            <h1 className="font-display text-2xl font-bold text-slate-900">{profile.name}</h1>
             <p className="text-slate-500">{profile.college}</p>
           </div>
           {isMe && (
-            <Link
-              to="/profile/edit"
-              className="text-sm border border-slate-300 rounded-md px-3 py-1.5 hover:bg-slate-50"
-            >
+            <Button variant="secondary" size="sm" to="/profile/edit">
               Edit profile
-            </Link>
+            </Button>
           )}
         </div>
 
@@ -58,9 +67,9 @@ function PublicProfile() {
           <span>{profile.completedSwaps ?? 0} completed swaps</span>
           <span className="capitalize">{profile.learningPreference}</span>
         </div>
-      </div>
+      </ProfileSection>
 
-      <div className="bg-white border border-slate-200 rounded-xl p-6">
+      <ProfileSection>
         <h2 className="text-sm font-semibold text-slate-800 mb-3">Can teach</h2>
         {profile.skillsToTeach?.length ? (
           <div className="flex flex-wrap gap-2">
@@ -71,9 +80,9 @@ function PublicProfile() {
         ) : (
           <p className="text-sm text-slate-400 italic">No teaching skills added yet.</p>
         )}
-      </div>
+      </ProfileSection>
 
-      <div className="bg-white border border-slate-200 rounded-xl p-6">
+      <ProfileSection>
         <h2 className="text-sm font-semibold text-slate-800 mb-3">Wants to learn</h2>
         {profile.skillsToLearn?.length ? (
           <div className="space-y-2">
@@ -87,23 +96,23 @@ function PublicProfile() {
         ) : (
           <p className="text-sm text-slate-400 italic">No learning goals added yet.</p>
         )}
-      </div>
+      </ProfileSection>
 
       {!isMe && me && <RequestSwapForm me={me} profile={profile} />}
 
       {reviews.length > 0 && (
-        <div className="bg-white border border-slate-200 rounded-xl p-6">
+        <ProfileSection>
           <h2 className="text-sm font-semibold text-slate-800 mb-3">Reviews</h2>
           <div className="space-y-2">
             {reviews.map((r) => (
               <ReviewCard key={r._id} review={r} />
             ))}
           </div>
-        </div>
+        </ProfileSection>
       )}
 
       {profile.availability?.length > 0 && (
-        <div className="bg-white border border-slate-200 rounded-xl p-6">
+        <ProfileSection>
           <h2 className="text-sm font-semibold text-slate-800 mb-3">Availability</h2>
           <ul className="text-sm text-slate-600 space-y-1">
             {profile.availability.map((slot, i) => (
@@ -112,7 +121,7 @@ function PublicProfile() {
               </li>
             ))}
           </ul>
-        </div>
+        </ProfileSection>
       )}
     </div>
   );

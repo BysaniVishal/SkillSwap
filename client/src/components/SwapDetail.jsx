@@ -5,9 +5,11 @@ import SessionPanel from "./SessionPanel";
 import ReviewForm from "./ReviewForm";
 import ReviewCard from "./ReviewCard";
 
-function SwapDetail({ swap }) {
+// Expansion is controlled by the parent (Swaps.jsx) so a "Schedule Session"
+// button elsewhere on the card can force this panel open, instead of the
+// user having to find and click the "Sessions & reviews" toggle first.
+function SwapDetail({ swap, expanded, onToggle }) {
   const { user } = useAuth();
-  const [expanded, setExpanded] = useState(false);
   const [reviews, setReviews] = useState(null);
 
   function loadReviews() {
@@ -26,7 +28,7 @@ function SwapDetail({ swap }) {
   return (
     <div>
       <button
-        onClick={() => setExpanded(!expanded)}
+        onClick={onToggle}
         className="text-sm font-medium text-slate-700 hover:text-slate-900"
       >
         {expanded ? "Hide details ▲" : "Sessions & reviews ▼"}

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-function VideoTile({ stream, label, muted = false }) {
+function VideoTile({ stream, label, muted = false, connected = false }) {
   const videoRef = useRef(null);
 
   useEffect(() => {
@@ -10,7 +10,11 @@ function VideoTile({ stream, label, muted = false }) {
   }, [stream]);
 
   return (
-    <div className="relative bg-slate-900 rounded-xl overflow-hidden aspect-video">
+    <div
+      className={`relative bg-slate-900 rounded-2xl overflow-hidden aspect-video ring-2 transition-all ${
+        connected ? "ring-emerald-400/70" : "ring-slate-700/40"
+      }`}
+    >
       {stream ? (
         <video
           ref={videoRef}
@@ -24,7 +28,7 @@ function VideoTile({ stream, label, muted = false }) {
           Waiting...
         </div>
       )}
-      <span className="absolute bottom-2 left-2 text-xs text-white bg-black/50 px-2 py-0.5 rounded">
+      <span className="absolute bottom-2 left-2 text-xs text-white bg-black/50 backdrop-blur px-2 py-0.5 rounded-full">
         {label}
       </span>
     </div>

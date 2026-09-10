@@ -6,22 +6,26 @@ import { getMyRequests } from "../services/swapRequests";
 import { getMySwaps } from "../services/swaps";
 import { getSessions } from "../services/sessions";
 import SkillBadge from "../components/SkillBadge";
-import MatchScore from "../components/MatchScore";
-
-function Card({ title, action, children }) {
-  return (
-    <div className="bg-white border border-slate-200 rounded-xl p-5">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-semibold text-slate-800">{title}</h2>
-        {action}
-      </div>
-      {children}
-    </div>
-  );
-}
+import Card from "../components/ui/Card";
+import { useInView } from "../hooks/useInView";
 
 function Empty({ children }) {
   return <p className="text-sm text-slate-400 italic">{children}</p>;
+}
+
+function Section({ title, action, children }) {
+  const [ref, inView] = useInView({ threshold: 0.1 });
+  return (
+    <div ref={ref} className={`reveal ${inView ? "reveal-visible" : ""}`}>
+      <Card>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-slate-800">{title}</h2>
+          {action}
+        </div>
+        {children}
+      </Card>
+    </div>
+  );
 }
 
 function Dashboard() {
@@ -48,12 +52,12 @@ function Dashboard() {
     : 0;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-slate-900">Welcome back, {user?.name}</h1>
+    <div className="max-w-5xl mx-auto px-4 py-8 bg-slate-100 min-h-[calc(100vh-4rem)]">
+      <h1 className="font-display text-2xl font-bold text-slate-900">Welcome back, {user?.name}</h1>
       <p className="text-slate-500 mt-1">{user?.college}</p>
 
       <div className="grid md:grid-cols-2 gap-4 mt-6">
-        <Card
+        <Section
           title="My Skills"
           action={
             <Link to="/profile/edit" className="text-xs text-slate-500 hover:text-slate-900">
@@ -91,9 +95,9 @@ function Dashboard() {
               )}
             </div>
           </div>
-        </Card>
+        </Section>
 
-        <Card
+        <Section
           title="Reputation"
           action={
             <Link to={`/profile/${user?._id}`} className="text-xs text-slate-500 hover:text-slate-900">
@@ -103,23 +107,23 @@ function Dashboard() {
         >
           <div className="grid grid-cols-3 gap-3 text-center">
             <div>
-              <p className="text-2xl font-bold text-slate-900">
+              <p className="font-display text-2xl font-bold text-slate-900">
                 ⭐ {user?.rating?.average?.toFixed(1) ?? "0.0"}
               </p>
               <p className="text-xs text-slate-500">{user?.rating?.count ?? 0} reviews</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-900">{user?.completedSwaps ?? 0}</p>
+              <p className="font-display text-2xl font-bold text-slate-900">{user?.completedSwaps ?? 0}</p>
               <p className="text-xs text-slate-500">Completed swaps</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-900">{skillsExchanged}</p>
+              <p className="font-display text-2xl font-bold text-slate-900">{skillsExchanged}</p>
               <p className="text-xs text-slate-500">Skills exchanged</p>
             </div>
           </div>
-        </Card>
+        </Section>
 
-        <Card
+        <Section
           title="Top Matches"
           action={
             <Link to="/discover" className="text-xs text-slate-500 hover:text-slate-900">
@@ -139,13 +143,13 @@ function Dashboard() {
                 className="flex items-center justify-between text-sm py-1.5 hover:bg-slate-50 rounded-md px-2 -mx-2"
               >
                 <span className="text-slate-800">{m.user.name}</span>
-                <span className="font-semibold text-slate-900">{m.score}%</span>
+                <span className="font-display font-bold text-slate-900">{m.score}%</span>
               </Link>
             ))}
           </div>
-        </Card>
+        </Section>
 
-        <Card
+        <Section
           title="Pending Requests"
           action={
             <Link to="/requests" className="text-xs text-slate-500 hover:text-slate-900">
@@ -166,9 +170,9 @@ function Dashboard() {
               </div>
             ))}
           </div>
-        </Card>
+        </Section>
 
-        <Card
+        <Section
           title="Active Swaps"
           action={
             <Link to="/swaps" className="text-xs text-slate-500 hover:text-slate-900">
@@ -192,9 +196,9 @@ function Dashboard() {
               );
             })}
           </div>
-        </Card>
+        </Section>
 
-        <Card
+        <Section
           title="Upcoming Sessions"
           action={
             <Link to="/swaps" className="text-xs text-slate-500 hover:text-slate-900">
@@ -215,7 +219,7 @@ function Dashboard() {
               </div>
             ))}
           </div>
-        </Card>
+        </Section>
       </div>
     </div>
   );

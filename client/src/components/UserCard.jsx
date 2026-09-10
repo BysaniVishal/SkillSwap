@@ -1,18 +1,19 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import MatchScore from "./MatchScore";
 import MatchReasons from "./MatchReasons";
 import SkillBadge from "./SkillBadge";
+import Card from "./ui/Card";
+import Button from "./ui/Button";
 
 function UserCard({ match }) {
   const [expanded, setExpanded] = useState(false);
-  const { user, score, matchedSkills, reasons } = match;
+  const { user, score, reasons } = match;
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl p-5">
+    <Card hover>
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-semibold text-slate-900 truncate">{user.name}</h3>
+          <h3 className="font-display text-lg font-semibold text-slate-900 truncate">{user.name}</h3>
           <p className="text-sm text-slate-500">{user.college}</p>
 
           <div className="mt-3">
@@ -70,20 +71,14 @@ function UserCard({ match }) {
       )}
 
       <div className="mt-4 flex gap-2">
-        <Link
-          to={`/profile/${user._id}`}
-          className="flex-1 text-center border border-slate-300 rounded-md py-2 text-sm font-medium hover:bg-slate-50"
-        >
+        <Button variant="secondary" to={`/profile/${user._id}`} className="flex-1">
           View Profile
-        </Link>
-        <Link
-          to={`/profile/${user._id}`}
-          className="flex-1 text-center bg-slate-900 text-white rounded-md py-2 text-sm font-medium hover:bg-slate-700"
-        >
+        </Button>
+        <Button to={`/profile/${user._id}`} className="flex-1">
           Request Swap
-        </Link>
+        </Button>
       </div>
-    </div>
+    </Card>
   );
 }
 

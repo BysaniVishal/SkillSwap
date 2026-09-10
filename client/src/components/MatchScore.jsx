@@ -8,7 +8,7 @@ function MatchScore({ score, size = "md" }) {
   const textSize = size === "lg" ? "text-3xl" : "text-xl";
   return (
     <div className="flex flex-col items-center">
-      <span className={`font-bold ${textSize} ${scoreColor(score)}`}>{score}%</span>
+      <span className={`font-display font-bold ${textSize} ${scoreColor(score)}`}>{score}%</span>
       <span className="text-xs text-slate-400">Match</span>
     </div>
   );

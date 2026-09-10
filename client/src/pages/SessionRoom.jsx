@@ -6,6 +6,7 @@ import { useWebRTC } from "../hooks/useWebRTC";
 import VideoTile from "../components/VideoTile";
 import Chat from "../components/Chat";
 import Whiteboard from "../components/Whiteboard";
+import Alert from "../components/ui/Alert";
 import { formatIST } from "../utils/sessionTime";
 
 function joinErrorMessage(error) {
@@ -34,6 +35,20 @@ const CONNECTION_LABELS = {
   failed:
     "Couldn't establish a direct connection — this can happen on some networks. A TURN relay server would fix this but isn't included in this project.",
 };
+
+function ControlButton({ active, danger, ...rest }) {
+  const classes = danger
+    ? "bg-red-600 text-white hover:bg-red-700"
+    : active
+      ? "bg-slate-800 text-white hover:bg-slate-700"
+      : "bg-red-50 text-red-700 hover:bg-red-100";
+  return (
+    <button
+      {...rest}
+      className={`text-sm rounded-full px-3 py-1.5 transition disabled:opacity-40 ${classes}`}
+    />
+  );
+}
 
 function SessionRoom() {
   const { sessionId } = useParams();
@@ -106,10 +121,10 @@ function SessionRoom() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6">
+    <div className="max-w-6xl mx-auto px-4 py-6 pb-28 bg-slate-100 min-h-[calc(100vh-4rem)]">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">
+          <h1 className="font-display text-xl font-bold text-slate-900">
             {session ? session.skill : "Session"} {other && `with ${other.name}`}
           </h1>
           <p className="text-sm text-slate-500">{CONNECTION_LABELS[connectionState]}</p>
@@ -120,102 +135,48 @@ function SessionRoom() {
       </div>
 
       {joinError && (
-        <div className="mb-4 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+        <Alert variant="warning" className="mb-4">
           {joinErrorMessage(joinError)}
-        </div>
+        </Alert>
       )}
 
       {sessionEnded && (
-        <div className="mb-4 text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-md px-3 py-2 flex items-center justify-between">
+        <Alert variant="info" className="mb-4 flex items-center justify-between">
           <span>This session has ended and was marked completed. Taking you back...</span>
           <Link to="/swaps" className="font-medium underline">
             Back to swaps now
           </Link>
-        </div>
+        </Alert>
       )}
 
       <div className="grid lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 space-y-3">
           <div className="grid grid-cols-2 gap-3">
-            <VideoTile stream={localStream} label={`You${isScreenSharing ? " (sharing screen)" : ""}`} muted />
-            <VideoTile stream={remoteStream} label={other?.name || "Other participant"} />
-          </div>
-
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={toggleMic}
-              disabled={sessionEnded}
-              className={`text-sm rounded-md px-3 py-1.5 border disabled:opacity-40 ${micOn ? "border-slate-300 hover:bg-slate-50" : "bg-red-50 border-red-200 text-red-700"}`}
-            >
-              {micOn ? "Mute mic" : "Unmute mic"}
-            </button>
-            <button
-              onClick={toggleCamera}
-              disabled={sessionEnded}
-              className={`text-sm rounded-md px-3 py-1.5 border disabled:opacity-40 ${cameraOn ? "border-slate-300 hover:bg-slate-50" : "bg-red-50 border-red-200 text-red-700"}`}
-            >
-              {cameraOn ? "Turn off camera" : "Turn on camera"}
-            </button>
-            <button
-              onClick={toggleScreenShare}
-              disabled={sessionEnded}
-              className={`text-sm rounded-md px-3 py-1.5 border disabled:opacity-40 ${isScreenSharing ? "bg-slate-900 text-white border-slate-900" : "border-slate-300 hover:bg-slate-50"}`}
-            >
-              {isScreenSharing ? "Stop sharing" : "Share screen"}
-            </button>
-
-            <div className="flex items-center gap-2 ml-auto">
-              <button
-                onClick={handleLeave}
-                disabled={ending || sessionEnded}
-                title="Leave the call — the other participant can stay or continue"
-                className="text-sm rounded-md px-3 py-1.5 border border-slate-300 hover:bg-slate-50 disabled:opacity-50"
-              >
-                Leave Session
-              </button>
-              {!confirmingEnd ? (
-                <button
-                  onClick={() => setConfirmingEnd(true)}
-                  disabled={ending || sessionEnded}
-                  title="Ends the session for both of you and marks it completed"
-                  className="text-sm rounded-md px-3 py-1.5 bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
-                >
-                  End Session
-                </button>
-              ) : (
-                <div className="flex items-center gap-2 text-sm bg-red-50 border border-red-200 rounded-md px-3 py-1.5">
-                  <span className="text-red-700">End for both of you?</span>
-                  <button
-                    onClick={handleEndSession}
-                    disabled={ending}
-                    className="text-white bg-red-600 hover:bg-red-700 rounded-md px-2 py-1 disabled:opacity-50"
-                  >
-                    {ending ? "Ending..." : "Confirm"}
-                  </button>
-                  <button
-                    onClick={() => setConfirmingEnd(false)}
-                    disabled={ending}
-                    className="text-slate-600 hover:text-slate-900 rounded-md px-2 py-1 border border-slate-300 disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
-            </div>
+            <VideoTile
+              stream={localStream}
+              label={`You${isScreenSharing ? " (sharing screen)" : ""}`}
+              muted
+              connected
+            />
+            <VideoTile
+              stream={remoteStream}
+              label={other?.name || "Other participant"}
+              connected={connectionState === "connected"}
+            />
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden h-[500px] flex flex-col">
-          <div className="flex border-b border-slate-200">
+        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden h-[500px] flex flex-col shadow-sm">
+          <div className="flex gap-1 p-2 border-b border-slate-200">
             <button
               onClick={() => setTab("chat")}
-              className={`flex-1 text-sm font-medium py-2 ${tab === "chat" ? "text-slate-900 border-b-2 border-slate-900" : "text-slate-500"}`}
+              className={`flex-1 text-sm font-medium py-1.5 rounded-full transition ${tab === "chat" ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"}`}
             >
               Chat
             </button>
             <button
               onClick={() => setTab("whiteboard")}
-              className={`flex-1 text-sm font-medium py-2 ${tab === "whiteboard" ? "text-slate-900 border-b-2 border-slate-900" : "text-slate-500"}`}
+              className={`flex-1 text-sm font-medium py-1.5 rounded-full transition ${tab === "whiteboard" ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"}`}
             >
               Whiteboard
             </button>
@@ -224,6 +185,57 @@ function SessionRoom() {
             {tab === "chat" ? <Chat /> : <Whiteboard />}
           </div>
         </div>
+      </div>
+
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-white border border-slate-200 rounded-full px-4 py-2 flex items-center gap-2 shadow-xl">
+        <ControlButton onClick={toggleMic} disabled={sessionEnded} active={micOn}>
+          {micOn ? "Mute mic" : "Unmute mic"}
+        </ControlButton>
+        <ControlButton onClick={toggleCamera} disabled={sessionEnded} active={cameraOn}>
+          {cameraOn ? "Turn off camera" : "Turn on camera"}
+        </ControlButton>
+        <ControlButton onClick={toggleScreenShare} disabled={sessionEnded} active={!isScreenSharing}>
+          {isScreenSharing ? "Stop sharing" : "Share screen"}
+        </ControlButton>
+
+        <div className="w-px h-5 bg-slate-300 mx-1" />
+
+        <button
+          onClick={handleLeave}
+          disabled={ending || sessionEnded}
+          title="Leave the call — the other participant can stay or continue"
+          className="text-sm rounded-full px-3 py-1.5 border border-slate-300 hover:bg-slate-50 disabled:opacity-50"
+        >
+          Leave
+        </button>
+        {!confirmingEnd ? (
+          <button
+            onClick={() => setConfirmingEnd(true)}
+            disabled={ending || sessionEnded}
+            title="Ends the session for both of you and marks it completed"
+            className="text-sm rounded-full px-3 py-1.5 bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+          >
+            End Session
+          </button>
+        ) : (
+          <div className="flex items-center gap-2 text-sm bg-red-50 border border-red-200 rounded-full px-3 py-1.5">
+            <span className="text-red-700">End for both?</span>
+            <button
+              onClick={handleEndSession}
+              disabled={ending}
+              className="text-white bg-red-600 hover:bg-red-700 rounded-full px-2 py-1 disabled:opacity-50"
+            >
+              {ending ? "Ending..." : "Confirm"}
+            </button>
+            <button
+              onClick={() => setConfirmingEnd(false)}
+              disabled={ending}
+              className="text-slate-600 hover:text-slate-900 rounded-full px-2 py-1 border border-slate-300 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

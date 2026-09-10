@@ -1,6 +1,6 @@
 function MatchReasons({ reasons, score }) {
   return (
-    <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+    <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
       <h3 className="text-sm font-semibold text-slate-800 mb-2">Why this match?</h3>
       <ul className="space-y-1.5">
         {reasons.map((r, i) => (
@@ -14,7 +14,7 @@ function MatchReasons({ reasons, score }) {
       </ul>
       <div className="mt-3 pt-3 border-t border-slate-200 flex items-center justify-between">
         <span className="text-sm font-medium text-slate-600">Total</span>
-        <span className="text-sm font-bold text-slate-900">{score}% Compatible</span>
+        <span className="font-display text-sm font-bold text-slate-900">{score}% Compatible</span>
       </div>
     </div>
   );

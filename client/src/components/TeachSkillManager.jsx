@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { getQuizQuestions, submitQuiz, removeTeachSkill } from "../services/users";
 import SkillPicker from "./SkillPicker";
+import Button from "./ui/Button";
+import Alert from "./ui/Alert";
 
 function TeachSkillManager({ taxonomy }) {
   const { user, setUser } = useAuth();
@@ -84,21 +86,21 @@ function TeachSkillManager({ taxonomy }) {
 
   return (
     <div>
-      <h3 className="text-sm font-semibold text-slate-800 mb-1">Skills I can teach</h3>
+      <h3 className="font-display text-sm font-semibold text-slate-800 mb-1">Skills I can teach</h3>
       <p className="text-xs text-slate-500 mb-3">
         Teaching proficiency is earned by passing a short skill test — not self-declared. This
         keeps match scores honest. Each skill's test can be retaken once a week.
       </p>
 
       {error && (
-        <p className="text-sm text-red-600 mb-2">
+        <Alert variant="error" className="mb-2">
           {error}
           {cooldownUntil && (
-            <span className="block text-xs text-slate-500 mt-0.5">
+            <span className="block text-xs mt-0.5 opacity-80">
               Unlocks {cooldownUntil.toLocaleString()}.
             </span>
           )}
-        </p>
+        </Alert>
       )}
 
       {teachList.length === 0 && (
@@ -109,12 +111,12 @@ function TeachSkillManager({ taxonomy }) {
         {teachList.map((s) => (
           <div
             key={s.skill}
-            className="flex items-center justify-between border border-slate-200 rounded-md p-3"
+            className="flex items-center justify-between border border-slate-200 rounded-xl p-3"
           >
-            <div>
+            <div className="flex items-center gap-2">
               <span className="font-medium text-sm text-slate-800">{s.skill}</span>
-              <span className="text-xs text-slate-500 ml-2">{s.category}</span>
-              <span className="ml-2 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+              <span className="text-xs text-slate-500">{s.category}</span>
+              <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">
                 {s.proficiency}
               </span>
             </div>
@@ -151,14 +153,9 @@ function TeachSkillManager({ taxonomy }) {
             Add a new teaching skill
           </p>
           <SkillPicker taxonomy={taxonomy} category={picker.category} skill={picker.skill} onChange={setPicker} />
-          <button
-            type="button"
-            onClick={handleStartQuiz}
-            disabled={loading}
-            className="mt-2 bg-slate-900 text-white text-sm rounded-md px-3 py-1.5 hover:bg-slate-700 disabled:opacity-50"
-          >
+          <Button size="sm" onClick={handleStartQuiz} disabled={loading} className="mt-2">
             {loading ? "Loading..." : `Take skill test for ${picker.skill}`}
-          </button>
+          </Button>
         </div>
       )}
 
@@ -166,7 +163,7 @@ function TeachSkillManager({ taxonomy }) {
         <form onSubmit={handleSubmitQuiz} className="border-t border-slate-100 pt-3 space-y-4">
           <p className="text-sm font-medium text-slate-700">Skill test: {picker.skill}</p>
           {quiz.questions.map((q, qi) => (
-            <div key={q.index} className="border border-slate-200 rounded-md p-3">
+            <div key={q.index} className="border border-slate-200 rounded-xl p-3">
               <p className="text-sm text-slate-800 mb-2">
                 {qi + 1}. {q.question}
               </p>
@@ -186,13 +183,9 @@ function TeachSkillManager({ taxonomy }) {
             </div>
           ))}
           <div className="flex items-center gap-2">
-            <button
-              type="submit"
-              disabled={!allAnswered || loading}
-              className="bg-slate-900 text-white text-sm rounded-md px-3 py-1.5 hover:bg-slate-700 disabled:opacity-50"
-            >
+            <Button type="submit" size="sm" disabled={!allAnswered || loading}>
               {loading ? "Grading..." : "Submit answers"}
-            </button>
+            </Button>
             <button
               type="button"
               onClick={() => setQuiz(null)}
@@ -206,13 +199,7 @@ function TeachSkillManager({ taxonomy }) {
 
       {result && (
         <div className="border-t border-slate-100 pt-3 mt-3">
-          <div
-            className={`rounded-md p-3 text-sm ${
-              result.passed
-                ? "bg-emerald-50 border border-emerald-200 text-emerald-800"
-                : "bg-amber-50 border border-amber-200 text-amber-800"
-            }`}
-          >
+          <Alert variant={result.passed ? "success" : "warning"}>
             <p className="font-medium">
               {result.correct}/{result.total} correct ({result.percent}%)
             </p>
@@ -226,15 +213,15 @@ function TeachSkillManager({ taxonomy }) {
                     href={result.resource}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-block mt-1 text-amber-900 underline"
+                    className="inline-block mt-1 underline"
                   >
                     Find tutorials for {picker.skill} →
                   </a>
                 )}
-                <p className="text-xs text-amber-700 mt-1">You can retake this test in a week.</p>
+                <p className="text-xs mt-1 opacity-80">You can retake this test in a week.</p>
               </>
             )}
-          </div>
+          </Alert>
           <button
             type="button"
             onClick={() => setResult(null)}

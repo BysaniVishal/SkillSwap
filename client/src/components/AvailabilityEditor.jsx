@@ -25,7 +25,7 @@ function AvailabilityEditor({ items, onChange }) {
         <button
           type="button"
           onClick={addRow}
-          className="text-xs font-medium text-slate-900 border border-slate-300 rounded-md px-2 py-1 hover:bg-slate-50"
+          className="text-xs font-medium text-slate-900 border border-slate-300 rounded-xl px-2 py-1 hover:bg-slate-50"
         >
           + Add time slot
         </button>
@@ -41,7 +41,7 @@ function AvailabilityEditor({ items, onChange }) {
             <select
               value={row.day}
               onChange={(e) => updateRow(index, "day", e.target.value)}
-              className="border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+              className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
             >
               {DAYS.map((d) => (
                 <option key={d} value={d}>
@@ -53,14 +53,14 @@ function AvailabilityEditor({ items, onChange }) {
               type="time"
               value={row.start}
               onChange={(e) => updateRow(index, "start", e.target.value)}
-              className="border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+              className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
             />
             <span className="text-slate-400 text-sm">to</span>
             <input
               type="time"
               value={row.end}
               onChange={(e) => updateRow(index, "end", e.target.value)}
-              className="border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+              className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
             />
             <button
               type="button"

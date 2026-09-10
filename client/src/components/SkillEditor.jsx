@@ -1,4 +1,5 @@
 import SkillPicker from "./SkillPicker";
+import Button from "./ui/Button";
 
 function emptyRow(taxonomy) {
   const firstCategory = taxonomy[0];
@@ -28,13 +29,9 @@ function SkillEditor({ title, items, onChange, taxonomy, proficiencyLevels }) {
     <div>
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
-        <button
-          type="button"
-          onClick={addRow}
-          className="text-xs font-medium text-slate-900 border border-slate-300 rounded-md px-2 py-1 hover:bg-slate-50"
-        >
+        <Button type="button" variant="secondary" size="sm" onClick={addRow}>
           + Add skill
-        </button>
+        </Button>
       </div>
 
       {items.length === 0 && (
@@ -43,7 +40,7 @@ function SkillEditor({ title, items, onChange, taxonomy, proficiencyLevels }) {
 
       <div className="space-y-3">
         {items.map((row, index) => (
-          <div key={index} className="border border-slate-200 rounded-md p-3 space-y-2">
+          <div key={index} className="border border-slate-200 rounded-xl p-3 space-y-2">
             <SkillPicker
               taxonomy={taxonomy}
               category={row.category}
@@ -57,7 +54,7 @@ function SkillEditor({ title, items, onChange, taxonomy, proficiencyLevels }) {
               <select
                 value={row.proficiency}
                 onChange={(e) => updateRow(index, "proficiency", e.target.value)}
-                className="border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+                className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
               >
                 {proficiencyLevels.map((p) => (
                   <option key={p} value={p}>
@@ -77,7 +74,7 @@ function SkillEditor({ title, items, onChange, taxonomy, proficiencyLevels }) {
               placeholder="Goal (optional) — e.g. Build a full-stack portfolio project"
               value={row.goal || ""}
               onChange={(e) => updateRow(index, "goal", e.target.value)}
-              className="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+              className="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
             />
           </div>
         ))}

@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { getMatches } from "../services/matches";
 import { getSkillsMeta } from "../services/users";
 import UserCard from "../components/UserCard";
+import Card from "../components/ui/Card";
+import Alert from "../components/ui/Alert";
+import { useInView } from "../hooks/useInView";
 
 function Discover() {
   const [matches, setMatches] = useState([]);
@@ -15,6 +18,7 @@ function Discover() {
     preference: "",
     sort: "best",
   });
+  const [resultsRef, resultsInView] = useInView({ threshold: 0.05 });
 
   useEffect(() => {
     getSkillsMeta().then(setMeta);
@@ -41,11 +45,11 @@ function Discover() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-slate-900 mb-1">Discover</h1>
+    <div className="max-w-4xl mx-auto px-4 py-8 bg-slate-100 min-h-[calc(100vh-4rem)]">
+      <h1 className="font-display text-2xl font-bold text-slate-900 mb-1">Discover</h1>
       <p className="text-slate-500 mb-6">Ranked by compatibility with your profile.</p>
 
-      <div className="bg-white border border-slate-200 rounded-xl p-4 mb-6 flex flex-wrap gap-3 items-end">
+      <Card className="mb-6 flex flex-wrap gap-3 items-end">
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-1">Skill</label>
           <input
@@ -105,21 +109,17 @@ function Discover() {
             <option value="rating">Highest Rated</option>
           </select>
         </div>
-      </div>
+      </Card>
 
       {loading && <div className="text-slate-500 py-12 text-center">Loading matches...</div>}
-      {error && (
-        <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">
-          {error}
-        </div>
-      )}
+      {error && <Alert variant="error">{error}</Alert>}
       {!loading && !error && matches.length === 0 && (
         <div className="text-slate-500 py-12 text-center">
           No matches found. Try widening your filters, or add more skills to your profile.
         </div>
       )}
 
-      <div className="space-y-4">
+      <div ref={resultsRef} className={`reveal ${resultsInView ? "reveal-visible" : ""} space-y-4`}>
         {matches.map((m) => (
           <UserCard key={m.user._id} match={m} />
         ))}

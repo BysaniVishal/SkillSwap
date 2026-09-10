@@ -9,21 +9,11 @@ import {
   formatSessionDate,
   todayIST,
 } from "../utils/sessionTime";
-
-const STATUS_STYLES = {
-  upcoming: "bg-blue-100 text-blue-800",
-  completed: "bg-emerald-100 text-emerald-800",
-  cancelled: "bg-slate-100 text-slate-600",
-  missed: "bg-amber-100 text-amber-800",
-};
+import StatusPill from "./ui/StatusPill";
+import Button from "./ui/Button";
+import Alert from "./ui/Alert";
 
 const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
-
-const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
-  const h = String(Math.floor(i / 2)).padStart(2, "0");
-  const m = i % 2 === 0 ? "00" : "30";
-  return `${h}:${m}`;
-});
 
 function emptyForm(skillOptions) {
   return { skill: skillOptions[0] || "", date: todayIST(), time: "18:00", duration: 60, notes: "" };
@@ -76,9 +66,9 @@ function SessionPanel({ swap }) {
   }
 
   return (
-    <div className="border border-slate-200 rounded-lg p-3 space-y-3">
+    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-3">
       <p className="text-sm font-medium text-slate-700">Sessions</p>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <Alert variant="error">{error}</Alert>}
 
       {loading && <p className="text-sm text-slate-400">Loading...</p>}
 
@@ -98,9 +88,7 @@ function SessionPanel({ swap }) {
                 {s.notes && <p className="text-slate-500 text-xs mt-0.5">{s.notes}</p>}
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <span className={`text-xs font-medium px-2 py-0.5 rounded-full capitalize ${STATUS_STYLES[s.status]}`}>
-                  {s.status}
-                </span>
+                <StatusPill status={s.status} />
                 {s.status === "upcoming" && !expiredButStale && (
                   <>
                     {joinable ? (
@@ -158,18 +146,14 @@ function SessionPanel({ swap }) {
             required
             className="border border-slate-300 rounded-md px-2 py-1.5 text-sm"
           />
-          <select
+          <input
+            type="time"
             value={form.time}
             onChange={(e) => setForm({ ...form, time: e.target.value })}
             title="Time is in India Standard Time (IST)"
+            required
             className="border border-slate-300 rounded-md px-2 py-1.5 text-sm"
-          >
-            {TIME_OPTIONS.map((t) => (
-              <option key={t} value={t}>
-                {t} IST
-              </option>
-            ))}
-          </select>
+          />
           <select
             value={form.duration}
             onChange={(e) => setForm({ ...form, duration: e.target.value })}
@@ -187,12 +171,9 @@ function SessionPanel({ swap }) {
             placeholder="Notes (optional)"
             className="border border-slate-300 rounded-md px-2 py-1.5 text-sm"
           />
-          <button
-            type="submit"
-            className="col-span-2 bg-slate-900 text-white text-sm rounded-md px-3 py-1.5 hover:bg-slate-700"
-          >
+          <Button type="submit" className="col-span-2">
             Schedule session
-          </button>
+          </Button>
         </form>
       )}
     </div>
