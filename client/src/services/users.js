@@ -25,3 +25,9 @@ export function removeTeachSkill(skill) {
     .delete(`/users/skills/teach/${encodeURIComponent(skill)}`)
     .then((res) => res.data.skillsToTeach);
 }
+
+export function uploadCertificate({ skill, proficiency, fileData, mimeType }) {
+  return api
+    .post("/users/skills/teach/certificate", { skill, proficiency, fileData, mimeType })
+    .then((res) => res.data.skillsToTeach);
+}

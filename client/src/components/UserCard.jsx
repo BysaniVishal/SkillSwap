@@ -23,7 +23,12 @@ function UserCard({ match }) {
             <div className="flex flex-wrap gap-1.5">
               {user.skillsToTeach.length ? (
                 user.skillsToTeach.map((s, i) => (
-                  <SkillBadge key={i} skill={s.skill} proficiency={s.proficiency} />
+                  <SkillBadge
+                    key={i}
+                    skill={s.skill}
+                    proficiency={s.proficiency}
+                    verificationMethod={s.verificationMethod}
+                  />
                 ))
               ) : (
                 <span className="text-sm text-slate-400 italic">Nothing listed yet</span>

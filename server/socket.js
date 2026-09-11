@@ -43,7 +43,7 @@ function hasActiveRoom(sessionId) {
 
 function initSocket(httpServer) {
   const io = new Server(httpServer, {
-    cors: { origin: "*" },
+    cors: { origin: process.env.CLIENT_URL || "*" },
   });
 
   // Authenticate once at connection time, same JWT the REST API uses —

@@ -3,6 +3,7 @@ const { SKILL_TAXONOMY } = require("../data/skillTaxonomy");
 const QuizAttempt = require("../models/QuizAttempt");
 const { invalidateCache } = require("../utils/cache");
 const { matchCacheKey } = require("./matchController");
+const { getResourceLinks } = require("../utils/resourceLinks");
 
 const COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000; // 1 week
 const QUESTIONS_PER_ATTEMPT = 8;
@@ -27,8 +28,7 @@ function shuffle(arr) {
 }
 
 function resourceLinkFor(skill) {
-  const query = encodeURIComponent(`${skill} tutorial for beginners`);
-  return `https://www.youtube.com/results?search_query=${query}`;
+  return getResourceLinks(skill)[0].url;
 }
 
 async function getCooldownRemaining(userId, skill) {

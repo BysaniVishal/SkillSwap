@@ -40,8 +40,8 @@ function ControlButton({ active, danger, ...rest }) {
   const classes = danger
     ? "bg-red-600 text-white hover:bg-red-700"
     : active
-      ? "bg-slate-800 text-white hover:bg-slate-700"
-      : "bg-red-50 text-red-700 hover:bg-red-100";
+      ? "bg-slate-700 text-white hover:bg-slate-600"
+      : "bg-red-500/20 text-red-200 hover:bg-red-500/30";
   return (
     <button
       {...rest}
@@ -150,24 +150,28 @@ function SessionRoom() {
       )}
 
       <div className="grid lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <VideoTile
-              stream={localStream}
-              label={`You${isScreenSharing ? " (sharing screen)" : ""}`}
-              muted
-              connected
-            />
+        <div className="lg:col-span-2">
+          <div className="relative bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden aspect-video">
             <VideoTile
               stream={remoteStream}
               label={other?.name || "Other participant"}
               connected={connectionState === "connected"}
             />
+            <div className="absolute bottom-4 right-4 w-32 sm:w-48 aspect-video">
+              <VideoTile
+                stream={localStream}
+                label={`You${isScreenSharing ? " (sharing screen)" : ""}`}
+                muted
+                connected
+                micOn={micOn}
+                pip
+              />
+            </div>
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden h-[500px] flex flex-col shadow-sm">
-          <div className="flex gap-1 p-2 border-b border-slate-200">
+        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden h-[500px] lg:h-full flex flex-col shadow-sm">
+          <div className="flex gap-1 p-2 border-b border-slate-200 bg-slate-50">
             <button
               onClick={() => setTab("chat")}
               className={`flex-1 text-sm font-medium py-1.5 rounded-full transition ${tab === "chat" ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"}`}
@@ -192,7 +196,7 @@ function SessionRoom() {
         </div>
       </div>
 
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-white border border-slate-200 rounded-full px-4 py-2 flex items-center gap-2 shadow-xl">
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-800/90 backdrop-blur border border-slate-700 rounded-full px-4 py-2 flex items-center gap-2 shadow-2xl">
         <ControlButton onClick={toggleMic} disabled={sessionEnded} active={micOn}>
           {micOn ? "Mute mic" : "Unmute mic"}
         </ControlButton>
@@ -203,13 +207,13 @@ function SessionRoom() {
           {isScreenSharing ? "Stop sharing" : "Share screen"}
         </ControlButton>
 
-        <div className="w-px h-5 bg-slate-300 mx-1" />
+        <div className="w-px h-5 bg-slate-600 mx-1" />
 
         <button
           onClick={handleLeave}
           disabled={ending || sessionEnded}
           title="Leave the call — the other participant can stay or continue"
-          className="text-sm rounded-full px-3 py-1.5 border border-slate-300 hover:bg-slate-50 disabled:opacity-50"
+          className="text-sm rounded-full px-3 py-1.5 border border-slate-600 text-slate-200 hover:bg-slate-700 disabled:opacity-50"
         >
           Leave
         </button>
@@ -223,8 +227,8 @@ function SessionRoom() {
             End Session
           </button>
         ) : (
-          <div className="flex items-center gap-2 text-sm bg-red-50 border border-red-200 rounded-full px-3 py-1.5">
-            <span className="text-red-700">End for both?</span>
+          <div className="flex items-center gap-2 text-sm bg-red-950/60 border border-red-500/40 rounded-full px-3 py-1.5">
+            <span className="text-red-200">End for both?</span>
             <button
               onClick={handleEndSession}
               disabled={ending}
@@ -235,7 +239,7 @@ function SessionRoom() {
             <button
               onClick={() => setConfirmingEnd(false)}
               disabled={ending}
-              className="text-slate-600 hover:text-slate-900 rounded-full px-2 py-1 border border-slate-300 disabled:opacity-50"
+              className="text-slate-200 hover:text-white rounded-full px-2 py-1 border border-slate-600 disabled:opacity-50"
             >
               Cancel
             </button>

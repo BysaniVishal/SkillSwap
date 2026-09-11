@@ -2,9 +2,17 @@ import { useEffect, useState } from "react";
 import { getMyRequests, updateRequestStatus } from "../services/swapRequests";
 import RequestCard from "../components/RequestCard";
 import Alert from "../components/ui/Alert";
+import { useToast } from "../components/ui/Toast";
 import { useInView } from "../hooks/useInView";
 
+const ACTION_MESSAGES = {
+  accepted: "Request accepted",
+  rejected: "Request rejected",
+  cancelled: "Request cancelled",
+};
+
 function Requests() {
+  const toast = useToast();
   const [data, setData] = useState({ sent: [], received: [] });
   const [tab, setTab] = useState("received");
   const [loading, setLoading] = useState(true);
@@ -24,9 +32,10 @@ function Requests() {
   async function handleAction(id, status) {
     try {
       await updateRequestStatus(id, status);
+      toast.success(ACTION_MESSAGES[status] || "Request updated");
       load();
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to update request");
+      toast.error(err.response?.data?.message || "Failed to update request");
     }
   }
 

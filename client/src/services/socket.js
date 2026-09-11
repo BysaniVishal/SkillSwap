@@ -6,10 +6,12 @@ let socket = null;
 // before the caller is ready to attach listeners.
 export function getSocket() {
   if (!socket) {
-    socket = io({
+    const opts = {
       autoConnect: false,
       auth: { token: localStorage.getItem("token") },
-    });
+    };
+    const url = import.meta.env.VITE_SOCKET_URL;
+    socket = url ? io(url, opts) : io(opts);
   }
   return socket;
 }

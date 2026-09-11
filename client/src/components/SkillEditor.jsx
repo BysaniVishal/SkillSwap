@@ -1,35 +1,37 @@
+import { useState } from "react";
 import SkillPicker from "./SkillPicker";
+import AddSkillModal from "./AddSkillModal";
 import Button from "./ui/Button";
-
-function emptyRow(taxonomy) {
-  const firstCategory = taxonomy[0];
-  const firstTopic = firstCategory.topics[0];
-  const firstSkill = firstTopic.skills[0];
-  return { skill: firstSkill, category: firstCategory.category, proficiency: "Beginner", goal: "" };
-}
+import { useToast } from "./ui/Toast";
 
 // Used for "skills I want to learn" only — self-declared proficiency, no
 // verification needed there (see TeachSkillManager for the teach side,
 // which is quiz-gated instead of a free proficiency dropdown).
 function SkillEditor({ title, items, onChange, taxonomy, proficiencyLevels }) {
+  const [modalOpen, setModalOpen] = useState(false);
+  const toast = useToast();
+
   function updateRow(index, field, value) {
     const next = items.map((row, i) => (i === index ? { ...row, [field]: value } : row));
     onChange(next);
   }
 
-  function addRow() {
-    onChange([...items, emptyRow(taxonomy)]);
+  function handleAdd(newSkill) {
+    onChange([...items, newSkill]);
+    setModalOpen(false);
+    toast.success("Skill added successfully");
   }
 
   function removeRow(index) {
     onChange(items.filter((_, i) => i !== index));
+    toast.success("Skill removed successfully");
   }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
-        <Button type="button" variant="secondary" size="sm" onClick={addRow}>
+        <Button type="button" variant="secondary" size="sm" onClick={() => setModalOpen(true)}>
           + Add skill
         </Button>
       </div>
@@ -79,6 +81,15 @@ function SkillEditor({ title, items, onChange, taxonomy, proficiencyLevels }) {
           </div>
         ))}
       </div>
+
+      <AddSkillModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        taxonomy={taxonomy}
+        proficiencyLevels={proficiencyLevels}
+        existingSkills={items}
+        onAdd={handleAdd}
+      />
     </div>
   );
 }

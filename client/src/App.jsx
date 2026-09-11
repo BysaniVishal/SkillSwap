@@ -4,6 +4,7 @@ import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ChatWidget from "./components/ChatWidget";
 import ScrollToTop from "./components/ScrollToTop";
+import { ToastProvider } from "./components/ui/Toast";
 
 const Landing = lazy(() => import("./pages/Landing"));
 const Login = lazy(() => import("./pages/Login"));
@@ -16,10 +17,11 @@ const Requests = lazy(() => import("./pages/Requests"));
 const Swaps = lazy(() => import("./pages/Swaps"));
 const SessionRoom = lazy(() => import("./pages/SessionRoom"));
 const SwapChatPage = lazy(() => import("./pages/SwapChatPage"));
+const ResourceHub = lazy(() => import("./pages/ResourceHub"));
 
 function App() {
   return (
-    <>
+    <ToastProvider>
       <ScrollToTop />
       <Navbar />
       <Suspense fallback={<div className="text-center py-20 text-slate-400">Loading...</div>}>
@@ -91,10 +93,18 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/resources"
+            element={
+              <ProtectedRoute>
+                <ResourceHub />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </Suspense>
       <ChatWidget />
-    </>
+    </ToastProvider>
   );
 }
 

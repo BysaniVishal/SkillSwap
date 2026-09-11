@@ -1,6 +1,9 @@
 import { useEffect, useRef } from "react";
 
-function VideoTile({ stream, label, muted = false, connected = false }) {
+// micOn is unrelated to the `muted` prop below — `muted` is the native
+// <video muted> attribute (prevents hearing your own mic echo locally),
+// while micOn reflects the actual mic on/off state shown to the room.
+function VideoTile({ stream, label, muted = false, connected = false, micOn, pip = false }) {
   const videoRef = useRef(null);
 
   useEffect(() => {
@@ -11,9 +14,9 @@ function VideoTile({ stream, label, muted = false, connected = false }) {
 
   return (
     <div
-      className={`relative bg-slate-900 rounded-2xl overflow-hidden aspect-video ring-2 transition-all ${
+      className={`relative w-full h-full bg-slate-900 overflow-hidden ring-2 transition-all ${
         connected ? "ring-emerald-400/70" : "ring-slate-700/40"
-      }`}
+      } ${pip ? "rounded-xl shadow-2xl" : "rounded-2xl"}`}
     >
       {stream ? (
         <video
@@ -28,7 +31,8 @@ function VideoTile({ stream, label, muted = false, connected = false }) {
           Waiting...
         </div>
       )}
-      <span className="absolute bottom-2 left-2 text-xs text-white bg-black/50 backdrop-blur px-2 py-0.5 rounded-full">
+      <span className="absolute bottom-2 left-2 flex items-center gap-1 text-xs text-white bg-black/50 backdrop-blur px-2 py-0.5 rounded-full">
+        {micOn === false && <span title="Mic is off">🔇</span>}
         {label}
       </span>
     </div>

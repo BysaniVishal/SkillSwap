@@ -7,10 +7,17 @@ import Card from "../components/ui/Card";
 import Alert from "../components/ui/Alert";
 import Button from "../components/ui/Button";
 import StatusPill from "../components/ui/StatusPill";
+import { useToast } from "../components/ui/Toast";
 import { useInView } from "../hooks/useInView";
+
+const STATUS_MESSAGES = {
+  completed: "Swap marked as completed",
+  cancelled: "Swap cancelled",
+};
 
 function Swaps() {
   const { user } = useAuth();
+  const toast = useToast();
   const [swaps, setSwaps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -43,9 +50,10 @@ function Swaps() {
   async function handleStatus(id, status) {
     try {
       await updateSwapStatus(id, status);
+      toast.success(STATUS_MESSAGES[status] || "Swap updated");
       load();
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to update swap");
+      toast.error(err.response?.data?.message || "Failed to update swap");
     }
   }
 

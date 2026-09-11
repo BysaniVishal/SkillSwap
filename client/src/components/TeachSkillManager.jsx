@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { getQuizQuestions, submitQuiz, removeTeachSkill } from "../services/users";
+import { getQuizQuestions, submitQuiz, removeTeachSkill, uploadCertificate } from "../services/users";
 import SkillPicker from "./SkillPicker";
+import UploadCertificateModal from "./UploadCertificateModal";
 import Button from "./ui/Button";
 import Alert from "./ui/Alert";
+import { useToast } from "./ui/Toast";
 
-function TeachSkillManager({ taxonomy }) {
+function TeachSkillManager({ taxonomy, proficiencyLevels }) {
   const { user, setUser } = useAuth();
+  const toast = useToast();
   const firstCategory = taxonomy[0];
   const firstSkill = firstCategory.topics[0].skills[0];
 
@@ -18,6 +21,8 @@ function TeachSkillManager({ taxonomy }) {
   const [removing, setRemoving] = useState("");
   const [error, setError] = useState("");
   const [cooldownUntil, setCooldownUntil] = useState(null);
+  const [certModalOpen, setCertModalOpen] = useState(false);
+  const [uploadingCert, setUploadingCert] = useState(false);
 
   const teachList = user?.skillsToTeach || [];
 
@@ -60,6 +65,7 @@ function TeachSkillManager({ taxonomy }) {
       if (res.passed) {
         setUser({ ...user, skillsToTeach: res.skillsToTeach });
         setQuiz(null);
+        toast.success("Skill added successfully");
       }
     } catch (err) {
       setError(describeCooldownError(err));
@@ -70,12 +76,12 @@ function TeachSkillManager({ taxonomy }) {
 
   async function handleRemove(skill) {
     setRemoving(skill);
-    setError("");
     try {
       const skillsToTeach = await removeTeachSkill(skill);
       setUser({ ...user, skillsToTeach });
+      toast.success("Skill removed successfully");
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to remove skill");
+      toast.error(err.response?.data?.message || "Failed to remove skill");
     } finally {
       setRemoving("");
     }
@@ -83,6 +89,20 @@ function TeachSkillManager({ taxonomy }) {
 
   const allAnswered =
     quiz && quiz.questions.every((q) => selected[q.index] !== undefined);
+
+  async function handleUploadCertificate(payload) {
+    setUploadingCert(true);
+    try {
+      const skillsToTeach = await uploadCertificate(payload);
+      setUser({ ...user, skillsToTeach });
+      setCertModalOpen(false);
+      toast.success("Certificate uploaded — skill added");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to upload certificate");
+    } finally {
+      setUploadingCert(false);
+    }
+  }
 
   return (
     <div>
@@ -117,7 +137,7 @@ function TeachSkillManager({ taxonomy }) {
               <span className="font-medium text-sm text-slate-800">{s.skill}</span>
               <span className="text-xs text-slate-500">{s.category}</span>
               <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">
-                {s.proficiency}
+                {s.verificationMethod === "certificate" ? "📄" : "✓"} {s.proficiency}
               </span>
             </div>
             <div className="flex items-center gap-3">
@@ -153,11 +173,29 @@ function TeachSkillManager({ taxonomy }) {
             Add a new teaching skill
           </p>
           <SkillPicker taxonomy={taxonomy} category={picker.category} skill={picker.skill} onChange={setPicker} />
-          <Button size="sm" onClick={handleStartQuiz} disabled={loading} className="mt-2">
-            {loading ? "Loading..." : `Take skill test for ${picker.skill}`}
-          </Button>
+          <div className="flex items-center gap-3 mt-2">
+            <Button size="sm" onClick={handleStartQuiz} disabled={loading}>
+              {loading ? "Loading..." : `Take skill test for ${picker.skill}`}
+            </Button>
+            <button
+              type="button"
+              onClick={() => setCertModalOpen(true)}
+              className="text-xs text-slate-600 hover:underline"
+            >
+              Upload a certificate instead
+            </button>
+          </div>
         </div>
       )}
+
+      <UploadCertificateModal
+        open={certModalOpen}
+        onClose={() => setCertModalOpen(false)}
+        taxonomy={taxonomy}
+        proficiencyLevels={proficiencyLevels}
+        onUpload={handleUploadCertificate}
+        loading={uploadingCert}
+      />
 
       {quiz && (
         <form onSubmit={handleSubmitQuiz} className="border-t border-slate-100 pt-3 space-y-4">

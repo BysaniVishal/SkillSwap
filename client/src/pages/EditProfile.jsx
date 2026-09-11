@@ -8,15 +8,16 @@ import AvailabilityEditor from "../components/AvailabilityEditor";
 import Card from "../components/ui/Card";
 import Alert from "../components/ui/Alert";
 import Button from "../components/ui/Button";
+import { useToast } from "../components/ui/Toast";
 
 function EditProfile() {
   const { user, setUser } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
   const [meta, setMeta] = useState(null);
   const [form, setForm] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     getSkillsMeta().then(setMeta);
@@ -40,15 +41,17 @@ function EditProfile() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (saving) return; // guard against a duplicate submit while one is in flight
     setError("");
-    setSuccess(false);
     setSaving(true);
     try {
       const updated = await updateProfile(form);
       setUser(updated);
-      setSuccess(true);
+      toast.success("Profile saved successfully");
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to save profile");
+      const message = err.response?.data?.message || "Failed to save profile. Please try again.";
+      setError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -71,11 +74,6 @@ function EditProfile() {
           {error}
         </Alert>
       )}
-      {success && (
-        <Alert variant="success" className="mb-4">
-          Profile saved.
-        </Alert>
-      )}
 
       <div className="space-y-8">
         {/* TeachSkillManager renders its own <form> for the quiz, so it
@@ -83,7 +81,7 @@ function EditProfile() {
             <form> elements (invalid HTML). Each teach-skill add/remove is
             already its own immediate round trip, not a batch-saved field. */}
         <Card>
-          <TeachSkillManager taxonomy={meta.taxonomy} />
+          <TeachSkillManager taxonomy={meta.taxonomy} proficiencyLevels={meta.proficiencyLevels} />
         </Card>
 
         <form onSubmit={handleSubmit} className="space-y-8">

@@ -15,6 +15,7 @@ const LOGGED_IN_LINKS = [
   { to: "/discover", label: "Discover" },
   { to: "/requests", label: "Requests" },
   { to: "/swaps", label: "Swaps" },
+  { to: "/resources", label: "Resources" },
 ];
 
 function Navbar() {

@@ -74,7 +74,12 @@ function PublicProfile() {
         {profile.skillsToTeach?.length ? (
           <div className="flex flex-wrap gap-2">
             {profile.skillsToTeach.map((s, i) => (
-              <SkillBadge key={i} skill={s.skill} proficiency={s.proficiency} />
+              <SkillBadge
+                key={i}
+                skill={s.skill}
+                proficiency={s.proficiency}
+                verificationMethod={s.verificationMethod}
+              />
             ))}
           </div>
         ) : (

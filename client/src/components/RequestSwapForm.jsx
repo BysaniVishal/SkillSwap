@@ -3,8 +3,10 @@ import { createSwapRequest } from "../services/swapRequests";
 import Card from "./ui/Card";
 import Alert from "./ui/Alert";
 import Button from "./ui/Button";
+import { useToast } from "./ui/Toast";
 
 function RequestSwapForm({ me, profile }) {
+  const toast = useToast();
   const [senderTeaches, setSenderTeaches] = useState(me.skillsToTeach?.[0]?.skill || "");
   const [senderLearns, setSenderLearns] = useState(profile.skillsToTeach?.[0]?.skill || "");
   const [message, setMessage] = useState("");
@@ -25,9 +27,12 @@ function RequestSwapForm({ me, profile }) {
         message,
       });
       setStatus("sent");
+      toast.success("Swap request sent successfully");
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to send request");
+      const message = err.response?.data?.message || "Failed to send request. Please try again.";
+      setError(message);
       setStatus("error");
+      toast.error(message);
     }
   }
 

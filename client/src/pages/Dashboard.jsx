@@ -73,7 +73,12 @@ function Dashboard() {
               {user?.skillsToTeach.length ? (
                 <div className="flex flex-wrap gap-1.5">
                   {user.skillsToTeach.map((s, i) => (
-                    <SkillBadge key={i} skill={s.skill} proficiency={s.proficiency} />
+                    <SkillBadge
+                      key={i}
+                      skill={s.skill}
+                      proficiency={s.proficiency}
+                      verificationMethod={s.verificationMethod}
+                    />
                   ))}
                 </div>
               ) : (

@@ -18,6 +18,7 @@ const teachSkillSchema = new mongoose.Schema(
     skill: { type: String, required: true, trim: true },
     category: { type: String, enum: SKILL_CATEGORIES, default: "Other" },
     proficiency: { type: String, enum: PROFICIENCY_LEVELS, required: true },
+    verificationMethod: { type: String, enum: ["quiz", "certificate"], default: "quiz" },
   },
   { _id: false }
 );
