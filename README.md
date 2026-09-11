@@ -211,8 +211,17 @@ One known, accepted limitation worth being upfront about: the WebRTC layer only 
 ## Future improvements
 
 Explicitly out of scope for this version, but natural next steps:
+<<<<<<< HEAD
 - Pre-filtering match candidates at the database level (e.g. an index on `skillsToTeach.skill`) before scoring, for very large user bases — the current O(n) scan-and-score is cached but still fundamentally O(n) per cache miss
 - A TURN server for more reliable WebRTC connectivity across restrictive networks
 - Moving Socket.IO's in-memory session-room state to shared storage (e.g. Redis, same pattern already used for match caching) if the server is ever horizontally scaled to multiple instances
 - Real end-to-end browser tests (this build relied on API-level curl testing plus manual verification throughout) and real screenshots in place of the placeholder above
 - Supporting more than 2 participants per session (the WebRTC layer is currently a single 1-to-1 peer connection, matching the product's one-swap-is-two-people model)
+=======
+- Precomputed/cached match scores for larger user bases
+- Real-time notifications for new requests/messages (WebSockets)
+- In-app messaging between matched users
+- Saved matches / bookmarking, skill circles, trending skills (all sketched in the original spec, cut to keep scope focused)
+
+
+>>>>>>> a4ab3df77a8baf47bd7bafb2cb2c8596b78e8dc3
