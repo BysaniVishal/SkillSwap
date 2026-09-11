@@ -34,6 +34,13 @@ function AddSkillModal({ open, onClose, taxonomy, proficiencyLevels, existingSki
 
   function handleSubmit(e) {
     e.preventDefault();
+    // This form is rendered through Modal's createPortal, so its DOM node
+    // sits outside EditProfile's outer "Save profile" <form> — but React's
+    // synthetic events still bubble through the *React* tree, not the DOM
+    // tree. Without stopping it here, submitting this modal also fires the
+    // outer form's onSubmit with stale (pre-add) state, immediately
+    // overwriting the skill that was just added.
+    e.stopPropagation();
 
     const alreadyAdded = existingSkills.some((s) => s.skill === selection.skill);
     if (alreadyAdded) {

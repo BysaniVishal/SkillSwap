@@ -67,6 +67,9 @@ function UploadCertificateModal({ open, onClose, taxonomy, proficiencyLevels, on
 
   async function handleSubmit(e) {
     e.preventDefault();
+    // See AddSkillModal.jsx — this form is portaled via Modal, so its submit
+    // would otherwise bubble through the React tree into any ancestor form.
+    e.stopPropagation();
     setError("");
     if (!file) {
       setError("Please choose a certificate file.");
