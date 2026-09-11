@@ -1,6 +1,8 @@
 const { QUIZ_BANK } = require("../data/quizBank");
 const { SKILL_TAXONOMY } = require("../data/skillTaxonomy");
 const QuizAttempt = require("../models/QuizAttempt");
+const { invalidateCache } = require("../utils/cache");
+const { matchCacheKey } = require("./matchController");
 
 const COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000; // 1 week
 const QUESTIONS_PER_ATTEMPT = 8;
@@ -137,6 +139,7 @@ async function submitQuiz(req, res) {
     req.user.skillsToTeach.push({ skill, category, proficiency });
   }
   await req.user.save();
+  await invalidateCache(matchCacheKey(req.user._id));
 
   res.status(200).json({
     passed: true,

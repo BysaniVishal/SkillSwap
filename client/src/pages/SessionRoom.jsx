@@ -182,7 +182,12 @@ function SessionRoom() {
             </button>
           </div>
           <div className="flex-1 min-h-0">
-            {tab === "chat" ? <Chat /> : <Whiteboard />}
+            <div className={`h-full ${tab === "chat" ? "" : "hidden"}`}>
+              <Chat />
+            </div>
+            <div className={`h-full ${tab === "whiteboard" ? "" : "hidden"}`}>
+              <Whiteboard />
+            </div>
           </div>
         </div>
       </div>

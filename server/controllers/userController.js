@@ -1,4 +1,6 @@
 const User = require("../models/User");
+const { invalidateCache } = require("../utils/cache");
+const { matchCacheKey } = require("./matchController");
 
 async function getUserById(req, res) {
   const user = await User.findById(req.params.id);
@@ -36,6 +38,10 @@ async function updateProfile(req, res) {
     runValidators: true,
   });
 
+  // Skills/availability/preference all feed calculateMatch() — this user's
+  // own cached match list is now stale against their new profile.
+  await invalidateCache(matchCacheKey(req.user._id));
+
   res.status(200).json({ user });
 }
 
@@ -47,6 +53,7 @@ async function removeTeachSkill(req, res) {
   const skill = req.params.skill;
   req.user.skillsToTeach = req.user.skillsToTeach.filter((s) => s.skill !== skill);
   await req.user.save();
+  await invalidateCache(matchCacheKey(req.user._id));
   res.status(200).json({ skillsToTeach: req.user.skillsToTeach });
 }
 
